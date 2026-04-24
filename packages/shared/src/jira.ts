@@ -13,6 +13,10 @@ export interface JiraIssue {
     assignee?: {
       displayName: string
     }
+    project: {
+      key: string
+      name: string
+    }
     created: string
   }
 }
@@ -58,6 +62,7 @@ export class JiraClient {
         Accept: 'application/json',
       },
     }, {
+      refetch: true, // 监听 URL 变化并自动重新拉取
       beforeFetch({ options }) {
         // 可以在这里添加通用的请求拦截逻辑
         return { options }
@@ -91,5 +96,27 @@ export class JiraClient {
     }).post({
       transition: { id: transitionId },
     }).json()
+  }
+
+  /**
+   * 获取所有项目
+   */
+  getProjects() {
+    const url = `${this.baseUrl}/rest/api/2/project`
+    return useFetch(url, {
+      headers: {
+        Authorization: `Basic ${this.auth}`,
+        Accept: 'application/json',
+      },
+    }).get().json<JiraProject[]>()
+  }
+}
+
+export interface JiraProject {
+  id: string
+  key: string
+  name: string
+  projectCategory?: {
+    name: string
   }
 }

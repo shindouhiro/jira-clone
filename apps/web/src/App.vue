@@ -4,11 +4,30 @@ import { computed, ref } from 'vue'
 
 const jira = new JiraClient('wuweidong', 'Wu83609045@')
 
+// 1. 获取分配给我的所有 Bug（用于提取“我的项目”列表）
+const { data: allMyIssuesData, isFetching: isInitialLoading } = jira.getBugs(() => '', () => false, 200)
+
+// 从分配给我的任务中提取唯一的项目列表
+const myProjects = computed(() => {
+  const issues = allMyIssuesData.value?.issues || []
+  const projectMap = new Map()
+  issues.forEach((issue) => {
+    const p = issue.fields.project
+    if (!projectMap.has(p.key)) {
+      projectMap.set(p.key, {
+        key: p.key,
+        name: p.name,
+      })
+    }
+  })
+  return Array.from(projectMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+})
+
 // 过滤器状态
 const projectFilter = ref('')
 const unresolvedOnly = ref(true)
 
-// Bug 列表 - 传入 getter 函数使其具有响应性
+// 2. 实际显示的 Bug 列表 - 响应过滤器的变化
 const {
   data,
   error: fetchError,
@@ -78,11 +97,24 @@ function getStatusClass(status: string) {
         <div class="flex flex-wrap items-center gap-4 bg-gray-900/50 p-4 rounded-2xl border border-gray-800">
           <div class="flex items-center gap-2">
             <div class="i-tabler-filter text-gray-500" />
-            <input
-              v-model="projectFilter"
-              placeholder="Filter by Project Key..."
-              class="bg-gray-800 border-none rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-teal-500 outline-none w-48"
-            >
+            <div class="relative min-w-48">
+              <select
+                v-model="projectFilter"
+                class="appearance-none bg-gray-800 border-none rounded-lg pl-3 pr-8 py-1.5 text-sm text-white focus:ring-2 focus:ring-teal-500 outline-none w-full cursor-pointer disabled:opacity-50"
+                :disabled="isInitialLoading"
+              >
+                <option value="" class="bg-gray-800 text-gray-200">
+                  {{ isInitialLoading ? 'Loading My Projects...' : 'All My Projects' }}
+                </option>
+                <option v-for="p in myProjects" :key="p.key" :value="p.key" class="bg-gray-800 text-gray-200">
+                  {{ p.name }}
+                </option>
+              </select>
+              <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                <div v-if="isInitialLoading" class="i-tabler-loader-2 animate-spin text-xs" />
+                <div v-else class="i-tabler-chevron-down text-xs" />
+              </div>
+            </div>
           </div>
 
           <label class="flex items-center gap-2 cursor-pointer select-none group">
