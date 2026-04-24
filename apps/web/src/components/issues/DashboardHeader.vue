@@ -57,8 +57,10 @@ const unresolvedOnlyModel = computed({
 
       <div class="flex items-center gap-1 p-1 bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 w-fit lg:mx-auto">
         <button
-          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200"
-          :class="activeTab === 'all' ? 'bg-white dark:bg-gray-900 text-teal-600 dark:text-teal-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 bg-transparent"
+          :class="activeTab === 'all' 
+            ? 'bg-teal-500/10 dark:bg-teal-400/10 text-teal-600 dark:text-teal-400 ring-1 ring-teal-500/20 dark:ring-teal-400/20 shadow-sm' 
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'"
           type="button"
           @click="emit('update:activeTab', 'all')"
         >
@@ -66,8 +68,10 @@ const unresolvedOnlyModel = computed({
           {{ t('common.all_bugs') || 'All Bugs' }}
         </button>
         <button
-          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200"
-          :class="activeTab === 'todo' ? 'bg-white dark:bg-gray-900 text-teal-600 dark:text-teal-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 bg-transparent"
+          :class="activeTab === 'todo' 
+            ? 'bg-teal-500/10 dark:bg-teal-400/10 text-teal-600 dark:text-teal-400 ring-1 ring-teal-500/20 dark:ring-teal-400/20 shadow-sm' 
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'"
           type="button"
           @click="emit('update:activeTab', 'todo')"
         >
