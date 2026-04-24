@@ -2,7 +2,7 @@
 import type { JiraIssue, JiraTransition, JiraUser } from '@jira/shared'
 import type { JiraClient } from '@jira/shared'
 import type { JiraAttachment } from '@/utils/issue'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useClipboard, onClickOutside, useDebounceFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { formatDisplayName, formatIssueDateTime, getPriorityColorClass } from '@/utils/issue'
@@ -36,7 +36,9 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const { copy, copied } = useClipboard()
+const { copy } = useClipboard()
+const copiedUrl = ref<string | null>(null)
+let copiedResetTimer: ReturnType<typeof setTimeout> | null = null
 
 const extractedUrls = computed(() => {
   const urlRegex = /(https?:\/\/[^\s]+)/g
@@ -44,8 +46,21 @@ const extractedUrls = computed(() => {
   return matches ? [...new Set(matches)] : []
 })
 
-function copyToClipboard(text: string) {
-  copy(text)
+async function copyToClipboard(text: string) {
+  try {
+    await copy(text)
+    copiedUrl.value = text
+    if (copiedResetTimer) {
+      clearTimeout(copiedResetTimer)
+    }
+    copiedResetTimer = setTimeout(() => {
+      if (copiedUrl.value === text)
+        copiedUrl.value = null
+    }, 1500)
+  }
+  catch (error) {
+    console.error('Failed to copy text:', error)
+  }
 }
 
 // 分配逻辑
@@ -54,6 +69,8 @@ const userSearchQuery = ref('')
 const assignableUsers = ref<JiraUser[]>([])
 const isSearchingUsers = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
+const downloadingFileIds = ref<Set<string>>(new Set())
+const downloadError = ref<string | null>(null)
 
 onClickOutside(dropdownRef, () => {
   isAssignDropdownOpen.value = false
@@ -92,6 +109,52 @@ function handleAssignUser(username: string | null) {
     return
   emit('assign', props.issueKey, username)
   isAssignDropdownOpen.value = false
+}
+
+onBeforeUnmount(() => {
+  if (copiedResetTimer) {
+    clearTimeout(copiedResetTimer)
+    copiedResetTimer = null
+  }
+})
+
+async function downloadAttachment(file: JiraAttachment) {
+  const downloadUrl = props.resolveAttachmentUrl(file.content)
+  const fileId = file.id || file.filename
+
+  if (!downloadUrl || downloadingFileIds.value.has(fileId))
+    return
+
+  downloadError.value = null
+  downloadingFileIds.value = new Set([...downloadingFileIds.value, fileId])
+
+  try {
+    const response = await fetch(downloadUrl, {
+      headers: props.jira.getAuthHeaders(),
+    })
+
+    if (!response.ok)
+      throw new Error(`HTTP ${response.status} ${response.statusText}`)
+
+    const blob = await response.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = objectUrl
+    anchor.download = file.filename || `attachment-${file.id}`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(objectUrl)
+  }
+  catch (error) {
+    console.error('Failed to download attachment:', error)
+    downloadError.value = '附件下载失败，请重试'
+  }
+  finally {
+    const next = new Set(downloadingFileIds.value)
+    next.delete(fileId)
+    downloadingFileIds.value = next
+  }
 }
 </script>
 
@@ -152,7 +215,10 @@ function handleAssignUser(username: string | null) {
                       :title="t('common.copy_url') || 'Copy URL'"
                       @click="copyToClipboard(url)"
                     >
-                      <span :class="copied ? 'i-tabler-check text-teal-500' : 'i-tabler-copy text-gray-400 group-hover:text-teal-500'" class="text-sm transition-colors" />
+                      <span
+                        :class="copiedUrl === url ? 'i-tabler-check text-teal-500' : 'i-tabler-copy text-gray-400 group-hover:text-teal-500'"
+                        class="text-sm transition-colors"
+                      />
                       <span class="max-w-[250px] truncate">{{ url }}</span>
                     </button>
                   </div>
@@ -199,14 +265,14 @@ function handleAssignUser(username: string | null) {
                 </div>
 
                 <div v-if="otherFiles.length" class="space-y-2">
-                  <a
+                  <button
                     v-for="file in otherFiles"
                     :id="`issue-attachment-file-${file.id}`"
                     :key="file.id"
-                    :href="resolveAttachmentUrl(file.content)"
-                    target="_blank"
-                    rel="noreferrer"
-                    class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:border-gray-200 dark:hover:border-gray-700 transition group"
+                    type="button"
+                    class="w-full flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:border-gray-200 dark:hover:border-gray-700 transition group text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                    :disabled="downloadingFileIds.has(file.id)"
+                    @click="downloadAttachment(file)"
                   >
                     <span class="i-tabler-file text-gray-500 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400" />
                     <span class="flex-1 min-w-0">
@@ -217,8 +283,15 @@ function handleAssignUser(username: string | null) {
                         {{ (file.size / 1024).toFixed(1) }} KB
                       </span>
                     </span>
-                    <span class="i-tabler-download text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100" />
-                  </a>
+                    <span
+                      class="text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100"
+                      :class="downloadingFileIds.has(file.id) ? 'i-tabler-loader-2 animate-spin opacity-100' : 'i-tabler-download'"
+                    />
+                  </button>
+
+                  <p v-if="downloadError" class="px-1 pt-1 text-xs text-red-500 dark:text-red-400">
+                    {{ downloadError }}
+                  </p>
                 </div>
               </section>
 
