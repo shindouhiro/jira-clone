@@ -17,7 +17,18 @@ export interface JiraIssue {
       key: string
       name: string
     }
+    description: string
     created: string
+    updated: string
+    comment?: {
+      comments: Array<{
+        author: {
+          displayName: string
+        }
+        body: string
+        created: string
+      }>
+    }
   }
 }
 
@@ -68,6 +79,28 @@ export class JiraClient {
         return { options }
       },
     }).get().json<JiraSearchResponse>()
+  }
+
+  /**
+   * 获取 Issue 详情
+   */
+  getIssueDetail(issueKey: () => string | null) {
+    const url = () => {
+      const key = issueKey()
+      if (!key)
+        return null
+      return `${this.baseUrl}/rest/api/2/issue/${key}`
+    }
+
+    return useFetch(url, {
+      headers: {
+        Authorization: `Basic ${this.auth}`,
+        Accept: 'application/json',
+      },
+    }, {
+      refetch: true,
+      immediate: false, // 只有在有 issueKey 时才执行
+    }).get().json<JiraIssue>()
   }
 
   /**

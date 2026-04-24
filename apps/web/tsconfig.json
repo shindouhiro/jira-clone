@@ -16,6 +16,7 @@
     "allowJs": true,
     "strict": true,
     "importHelpers": true,
+    "noEmit": true,
     "sourceMap": true,
     "esModuleInterop": true,
     "isolatedModules": true,

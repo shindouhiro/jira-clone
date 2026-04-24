@@ -40,6 +40,21 @@ const {
 
 const issues = computed(() => data.value?.issues || [])
 
+// 详情弹窗状态
+const selectedIssueKey = ref<string | null>(null)
+const { data: detailData, isFetching: isDetailFetching, execute: fetchDetail } = jira.getIssueDetail(() => selectedIssueKey.value)
+
+function openDetail(key: string) {
+  selectedIssueKey.value = key
+  fetchDetail()
+}
+
+function closeDetail() {
+  selectedIssueKey.value = null
+}
+
+const selectedIssue = computed(() => detailData.value)
+
 // 统一错误处理
 const errorMessage = computed(() => {
   if (!fetchError.value)
@@ -57,6 +72,10 @@ async function handleTransition(issueKey: string, transitionId: string) {
     await execute()
     if (!error.value) {
       await fetchBugs()
+      // 如果当前弹窗打开的是这个 Issue，更新详情
+      if (selectedIssueKey.value === issueKey) {
+        await fetchDetail()
+      }
     }
   }
   finally {
@@ -164,7 +183,12 @@ function getStatusClass(status: string) {
       <!-- Bug List -->
       <div v-else class="grid gap-4">
         <TransitionGroup name="list">
-          <div v-for="issue in issues" :key="issue.key" class="card group relative overflow-hidden">
+          <div
+            v-for="issue in issues"
+            :key="issue.key"
+            class="card group relative overflow-hidden cursor-pointer"
+            @click="openDetail(issue.key)"
+          >
             <!-- Loading overlay for specific card -->
             <div v-if="updatingKeys.has(issue.key)" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex items-center justify-center">
               <div class="i-tabler-loader-2 text-3xl text-teal-500 animate-spin" />
@@ -200,7 +224,7 @@ function getStatusClass(status: string) {
               </div>
 
               <!-- Action Buttons -->
-              <div class="flex flex-col justify-center gap-2 min-w-140px">
+              <div class="flex flex-col justify-center gap-2 min-w-140px" @click.stop>
                 <p class="text-[10px] uppercase tracking-widest text-gray-600 font-bold mb-1">
                   Actions
                 </p>
@@ -244,6 +268,147 @@ function getStatusClass(status: string) {
         </p>
       </div>
     </div>
+
+    <!-- Detail Modal -->
+    <Transition name="fade">
+      <div v-if="selectedIssueKey" class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="closeDetail" />
+
+        <!-- Modal Content -->
+        <div class="relative bg-gray-900 border border-gray-800 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl flex flex-col">
+          <!-- Modal Header -->
+          <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+              <span class="text-lg font-mono font-bold text-teal-500 bg-teal-500/10 px-3 py-1 rounded">
+                {{ selectedIssueKey }}
+              </span>
+              <div v-if="isDetailFetching" class="i-tabler-loader-2 animate-spin text-teal-500" />
+            </div>
+            <button class="p-2 hover:bg-gray-800 rounded-full transition-colors text-gray-400" @click="closeDetail">
+              <div class="i-tabler-x text-2xl" />
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div v-if="selectedIssue" class="flex-1 overflow-y-auto p-6 md:p-10">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <!-- Left Column: Content -->
+              <div class="lg:col-span-2 space-y-8">
+                <section>
+                  <h2 class="text-3xl font-bold text-white mb-4 leading-tight">
+                    {{ selectedIssue.fields.summary }}
+                  </h2>
+                  <div class="prose prose-invert max-w-none">
+                    <p v-if="selectedIssue.fields.description" class="text-gray-400 whitespace-pre-wrap leading-relaxed">
+                      {{ selectedIssue.fields.description }}
+                    </p>
+                    <p v-else class="text-gray-600 italic">
+                      No description provided.
+                    </p>
+                  </div>
+                </section>
+
+                <section v-if="selectedIssue.fields.comment?.comments.length" class="space-y-6">
+                  <h4 class="text-sm font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                    <div class="i-tabler-messages" />
+                    Comments ({{ selectedIssue.fields.comment.comments.length }})
+                  </h4>
+                  <div class="space-y-4">
+                    <div v-for="comment in selectedIssue.fields.comment.comments" :key="comment.created" class="bg-gray-800/30 p-4 rounded-2xl border border-gray-800/50">
+                      <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-teal-400 text-sm">{{ comment.author.displayName }}</span>
+                        <span class="text-[10px] text-gray-600">{{ new Date(comment.created).toLocaleString() }}</span>
+                      </div>
+                      <p class="text-sm text-gray-300 leading-relaxed">
+                        {{ comment.body }}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <!-- Right Column: Meta Info -->
+              <div class="space-y-6">
+                <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/30 space-y-6">
+                  <div>
+                    <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                      Status
+                    </p>
+                    <span class="px-3 py-1 rounded-full border text-sm inline-block" :class="getStatusClass(selectedIssue.fields.status.name)">
+                      {{ selectedIssue.fields.status.name }}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                      Priority
+                    </p>
+                    <div class="flex items-center gap-2 text-gray-300">
+                      <div class="i-tabler-alert-triangle text-yellow-500" />
+                      {{ selectedIssue.fields.priority.name }}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                      Assignee
+                    </p>
+                    <div class="flex items-center gap-3 text-gray-300">
+                      <div class="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-500 font-bold text-xs">
+                        {{ selectedIssue.fields.assignee?.displayName.charAt(0) || 'U' }}
+                      </div>
+                      {{ selectedIssue.fields.assignee?.displayName || 'Unassigned' }}
+                    </div>
+                  </div>
+
+                  <div class="pt-6 border-t border-gray-800 space-y-4 text-xs text-gray-500">
+                    <div class="flex justify-between">
+                      <span>Created</span>
+                      <span class="text-gray-400">{{ new Date(selectedIssue.fields.created).toLocaleString() }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Updated</span>
+                      <span class="text-gray-400">{{ new Date(selectedIssue.fields.updated).toLocaleString() }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="space-y-2">
+                  <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold px-2">
+                    Quick Transitions
+                  </p>
+                  <div class="grid grid-cols-1 gap-2">
+                    <button
+                      v-if="selectedIssue.fields.status.name !== 'In Progress'"
+                      class="px-4 py-2.5 text-sm rounded-xl bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-3"
+                      @click="handleTransition(selectedIssue.key, '21')"
+                    >
+                      <div class="i-tabler-player-play" /> Start Progress
+                    </button>
+                    <button
+                      v-if="selectedIssue.fields.status.name !== 'Done' && selectedIssue.fields.status.name !== 'Resolved'"
+                      class="px-4 py-2.5 text-sm rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-black transition-all flex items-center gap-3"
+                      @click="handleTransition(selectedIssue.key, '31')"
+                    >
+                      <div class="i-tabler-check" /> Resolve
+                    </button>
+                    <button
+                      v-if="selectedIssue.fields.status.name === 'Done' || selectedIssue.fields.status.name === 'Resolved' || selectedIssue.fields.status.name === 'In Progress'"
+                      class="px-4 py-2.5 text-sm rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all flex items-center gap-3"
+                      @click="handleTransition(selectedIssue.key, '11')"
+                    >
+                      <div class="i-tabler-arrow-back-up" /> Reopen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
