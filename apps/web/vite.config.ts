@@ -17,6 +17,11 @@ export default defineConfig({
         target: 'http://jira.cloudtogo.local',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api-jira/, ''),
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, _req, _res) => {
+            proxyReq.setHeader('X-Atlassian-Token', 'no-check')
+          })
+        },
       },
     },
   },

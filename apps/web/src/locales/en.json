@@ -22,7 +22,8 @@
     "start_progress": "Start Progress",
     "resolve": "Resolve",
     "reopen": "Reopen",
-    "close": "Close"
+    "close": "Close",
+    "start_testing": "Start Testing"
   },
   "detail": {
     "description": "Description",

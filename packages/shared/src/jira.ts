@@ -141,13 +141,22 @@ export class JiraClient {
   /**
    * 获取 Issue 的可执行转换列表
    */
-  getTransitions(issueKey: string) {
-    const url = `${this.baseUrl}/rest/api/2/issue/${issueKey}/transitions`
+  getTransitions(issueKey: () => string | null) {
+    const url = () => {
+      const key = issueKey()
+      if (!key)
+        return null
+      return `${this.baseUrl}/rest/api/2/issue/${key}/transitions`
+    }
+
     return useFetch(url, {
       headers: {
         Authorization: `Basic ${this.auth}`,
         Accept: 'application/json',
       },
+    }, {
+      refetch: true,
+      immediate: false,
     }).get().json<{ transitions: any[] }>()
   }
 
@@ -157,13 +166,17 @@ export class JiraClient {
   doTransition(issueKey: string, transitionId: string) {
     const url = `${this.baseUrl}/rest/api/2/issue/${issueKey}/transitions`
     return useFetch(url, {
+      immediate: false,
       headers: {
         'Authorization': `Basic ${this.auth}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Atlassian-Token': 'no-check',
+        'X-Requested-With': 'XMLHttpRequest',
       },
-    }).post({
-      transition: { id: transitionId },
-    }).json()
+    }).post(JSON.stringify({
+      transition: { id: String(transitionId) },
+    })).json()
   }
 
   /**

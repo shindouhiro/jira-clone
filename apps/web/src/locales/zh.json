@@ -22,7 +22,8 @@
     "start_progress": "开始处理",
     "resolve": "解决",
     "reopen": "重新打开",
-    "close": "关闭"
+    "close": "关闭",
+    "start_testing": "开始测试"
   },
   "detail": {
     "description": "描述",

@@ -51,16 +51,21 @@ const issues = computed(() => data.value?.issues || [])
 const selectedIssueKey = ref<string | null>(null)
 const { data: detailData, isFetching: isDetailFetching, execute: fetchDetail } = jira.getIssueDetail(() => selectedIssueKey.value)
 
+const selectedIssue = computed(() => detailData.value)
+
+// 3. 获取当前 Issue 可执行的转换
+const { data: transitionsData, isFetching: isTransitionsFetching, execute: fetchTransitions } = jira.getTransitions(() => selectedIssueKey.value)
+const transitions = computed(() => transitionsData.value?.transitions || [])
+
 function openDetail(key: string) {
   selectedIssueKey.value = key
   fetchDetail()
+  fetchTransitions()
 }
 
 function closeDetail() {
   selectedIssueKey.value = null
 }
-
-const selectedIssue = computed(() => detailData.value)
 
 // 附件相关逻辑
 const images = computed(() => {
@@ -145,18 +150,33 @@ const errorMessage = computed(() => {
 // 状态修改逻辑
 const updatingKeys = ref<Set<string>>(new Set())
 
+const transitionError = ref<string | null>(null)
+
 async function handleTransition(issueKey: string, transitionId: string) {
   updatingKeys.value.add(issueKey)
+  transitionError.value = null
   try {
-    const { error, execute } = jira.doTransition(issueKey, transitionId)
+    const { error, execute, data } = jira.doTransition(issueKey, transitionId)
     await execute()
-    if (!error.value) {
+    if (error.value) {
+      // 尝试从响应数据中获取更详细的错误信息
+      const detail = data.value?.errorMessages?.[0] || data.value?.errors?.[Object.keys(data.value?.errors || {})[0]] || error.value
+      transitionError.value = `${t('common.error_fetch')}: ${detail}`
+
+      // 如果是 500 错误，打印更多上下文
+      console.error('Transition failed with Status:', error.value)
+      console.error('Response Data:', data.value)
+    }
+    else {
       await fetchBugs()
       // 如果当前弹窗打开的是这个 Issue，更新详情
       if (selectedIssueKey.value === issueKey) {
         await fetchDetail()
       }
     }
+  }
+  catch (e) {
+    transitionError.value = `An unexpected error occurred: ${e}`
   }
   finally {
     updatingKeys.value.delete(issueKey)
@@ -165,11 +185,19 @@ async function handleTransition(issueKey: string, transitionId: string) {
 
 // 简单的状态颜色映射
 const statusColors: Record<string, string> = {
+  // English
   'To Do': 'bg-blue-500/20 text-blue-400 border-blue-500/50',
   'In Progress': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
   'Done': 'bg-green-500/20 text-green-400 border-green-500/50',
   'Resolved': 'bg-green-500/20 text-green-400 border-green-500/50',
   'Open': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50',
+  // Chinese
+  '待办': 'bg-blue-500/20 text-blue-400 border-blue-500/50',
+  '处理中': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
+  '进行中': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
+  '已完成': 'bg-green-500/20 text-green-400 border-green-500/50',
+  '已解决': 'bg-green-500/20 text-green-400 border-green-500/50',
+  '开放': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50',
 }
 
 function getStatusClass(status: string) {
@@ -200,6 +228,19 @@ const cleanedDescription = computed(() => {
             Managing tasks for <code class="bg-gray-800 px-1 rounded text-teal-400">wuweidong</code>
           </p>
         </div>
+
+        <!-- Global Transition Error -->
+        <Transition name="fade">
+          <div v-if="transitionError" class="fixed top-6 right-6 z-[200] bg-red-500/10 border border-red-500/50 backdrop-blur-md p-4 rounded-2xl flex items-center gap-3 shadow-2xl shadow-red-900/20">
+            <div class="i-tabler-alert-circle text-red-500 text-xl" />
+            <p class="text-red-200 text-sm font-medium max-w-sm">
+              {{ transitionError }}
+            </p>
+            <button class="p-1 hover:bg-white/10 rounded-lg transition-colors text-red-300" @click="transitionError = null">
+              <div class="i-tabler-x" />
+            </button>
+          </div>
+        </Transition>
 
         <!-- Filters & Language -->
         <div class="flex flex-wrap items-center gap-4 bg-gray-900/50 p-4 rounded-2xl border border-gray-800">
@@ -327,30 +368,37 @@ const cleanedDescription = computed(() => {
 
               <!-- Action Buttons -->
               <div class="flex flex-col justify-center gap-2 min-w-140px" @click.stop>
+                <!-- 列表页暂时保留硬编码或根据状态显示最常用的（Jira 列表通常不放流转，这里保留之前的逻辑但加上错误处理） -->
                 <p class="text-[10px] uppercase tracking-widest text-gray-600 font-bold mb-1">
                   {{ t('common.actions') }}
                 </p>
                 <div class="flex flex-wrap md:flex-col gap-2">
                   <button
-                    v-if="issue.fields.status.name !== 'In Progress'"
-                    class="px-3 py-1.5 text-xs rounded-lg bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-2"
-                    @click="handleTransition(issue.key, '21')"
-                  >
-                    <div class="i-tabler-player-play" /> {{ t('actions.start_progress') }}
-                  </button>
-                  <button
-                    v-if="issue.fields.status.name !== 'Done' && issue.fields.status.name !== 'Resolved'"
-                    class="px-3 py-1.5 text-xs rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-black transition-all flex items-center gap-2"
-                    @click="handleTransition(issue.key, '31')"
-                  >
-                    <div class="i-tabler-check" /> {{ t('actions.resolve') }}
-                  </button>
-                  <button
-                    v-if="issue.fields.status.name === 'Done' || issue.fields.status.name === 'Resolved' || issue.fields.status.name === 'In Progress'"
-                    class="px-3 py-1.5 text-xs rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all flex items-center gap-2"
+                    v-if="['To Do', 'Open', '待办', '开放'].includes(issue.fields.status.name)"
+                    class="px-3 py-1.5 text-xs rounded-lg bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-2 disabled:opacity-50"
+                    :disabled="updatingKeys.has(issue.key)"
                     @click="handleTransition(issue.key, '11')"
                   >
-                    <div class="i-tabler-arrow-back-up" /> {{ t('actions.reopen') }}
+                    <div v-if="updatingKeys.has(issue.key)" class="i-tabler-loader-2 animate-spin" />
+                    <div v-else class="i-tabler-player-play" /> {{ t('actions.start_progress') }}
+                  </button>
+                  <button
+                    v-if="['In Progress', '处理中', '进行中'].includes(issue.fields.status.name)"
+                    class="px-3 py-1.5 text-xs rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-black transition-all flex items-center gap-2 disabled:opacity-50"
+                    :disabled="updatingKeys.has(issue.key)"
+                    @click="handleTransition(issue.key, '21')"
+                  >
+                    <div v-if="updatingKeys.has(issue.key)" class="i-tabler-loader-2 animate-spin" />
+                    <div v-else class="i-tabler-check" /> {{ t('actions.resolve') }}
+                  </button>
+                  <button
+                    v-if="['Resolved', '已解决'].includes(issue.fields.status.name)"
+                    class="px-3 py-1.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500 hover:text-black transition-all flex items-center gap-2 disabled:opacity-50"
+                    :disabled="updatingKeys.has(issue.key)"
+                    @click="handleTransition(issue.key, '31')"
+                  >
+                    <div v-if="updatingKeys.has(issue.key)" class="i-tabler-loader-2 animate-spin" />
+                    <div v-else class="i-tabler-test-pipe" /> {{ t('actions.start_testing') }}
                   </button>
                 </div>
               </div>
@@ -538,26 +586,19 @@ const cleanedDescription = computed(() => {
                     {{ t('detail.quick_transitions') }}
                   </p>
                   <div class="grid grid-cols-1 gap-2.5">
+                    <div v-if="isTransitionsFetching" class="flex items-center justify-center py-4">
+                      <div class="i-tabler-loader-2 animate-spin text-gray-600" />
+                    </div>
                     <button
-                      v-if="selectedIssue.fields.status.name !== 'In Progress'"
-                      class="px-4 py-2.5 text-sm rounded-xl bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-3"
-                      @click="handleTransition(selectedIssue.key, '21')"
+                      v-for="t in transitions"
+                      :key="t.id"
+                      class="px-4 py-2.5 text-sm rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500 hover:text-black transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="updatingKeys.has(selectedIssue.key)"
+                      @click="handleTransition(selectedIssue.key, t.id)"
                     >
-                      <div class="i-tabler-player-play" /> {{ t('actions.start_progress') }}
-                    </button>
-                    <button
-                      v-if="selectedIssue.fields.status.name !== 'Done' && selectedIssue.fields.status.name !== 'Resolved'"
-                      class="px-4 py-2.5 text-sm rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-black transition-all flex items-center gap-3"
-                      @click="handleTransition(selectedIssue.key, '31')"
-                    >
-                      <div class="i-tabler-check" /> {{ t('actions.resolve') }}
-                    </button>
-                    <button
-                      v-if="selectedIssue.fields.status.name === 'Done' || selectedIssue.fields.status.name === 'Resolved' || selectedIssue.fields.status.name === 'In Progress'"
-                      class="px-4 py-2.5 text-sm rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all flex items-center gap-3"
-                      @click="handleTransition(selectedIssue.key, '11')"
-                    >
-                      <div class="i-tabler-arrow-back-up" /> {{ t('actions.reopen') }}
+                      <div v-if="updatingKeys.has(selectedIssue.key)" class="i-tabler-loader-2 animate-spin" />
+                      <div v-else class="i-tabler-arrow-right" />
+                      {{ t.name }}
                     </button>
                   </div>
                 </div>
