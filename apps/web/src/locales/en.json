@@ -29,7 +29,10 @@
     "resolve_directly": "Resolve Directly",
     "fix": "Fix",
     "confirm_transition_title": "Confirm Action",
-    "confirm_transition_message": "Are you sure you want to transition {key}? This action will be synced to Jira immediately."
+    "confirm_transition_message": "Are you sure you want to transition {key}? This action will be synced to Jira immediately.",
+    "assign": "Assign",
+    "search_user": "Search users...",
+    "no_users_found": "No users found"
   },
   "detail": {
     "description": "Description",

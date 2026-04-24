@@ -121,6 +121,37 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     }
   }
 
+  async function handleAssign(issueKey: string, username: string | null) {
+    updatingKeys.value.add(issueKey)
+    transitionError.value = null
+
+    try {
+      const { error, execute, data: assignData } = jira.assignIssue(issueKey, username)
+      await execute()
+
+      if (error.value) {
+        const detailError = assignData.value?.errorMessages?.[0]
+          || assignData.value?.errors?.[Object.keys(assignData.value?.errors || {})[0]]
+          || error.value
+
+        transitionError.value = `${options.t('common.error_fetch')}: ${detailError}`
+        console.error('Assignment failed with status:', error.value)
+        console.error('Assignment response data:', assignData.value)
+      }
+      else {
+        await fetchBugs()
+        if (selectedIssueKey.value === issueKey)
+          await fetchDetail()
+      }
+    }
+    catch (error) {
+      transitionError.value = `An unexpected error occurred: ${String(error)}`
+    }
+    finally {
+      updatingKeys.value.delete(issueKey)
+    }
+  }
+
   return {
     jira,
     projectFilter,
@@ -141,5 +172,6 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     updatingKeys,
     transitionError,
     handleTransition,
+    handleAssign,
   }
 }

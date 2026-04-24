@@ -57,6 +57,7 @@ const {
   updatingKeys,
   transitionError,
   handleTransition: originalHandleTransition,
+  handleAssign: originalHandleAssign,
 } = dashboard
 
 // 包装原有的流转逻辑，加入确认步骤
@@ -184,10 +185,12 @@ function refreshIssues() {
       :updating-keys="updatingKeys"
       :get-status-class="getStatusClass"
       :resolve-attachment-url="resolveAttachmentUrl"
+      :jira="jira"
       @close="closeDetail"
       @open-preview="openPreview"
       @close-preview="closePreview"
       @transition="handleTransitionWithConfirm"
+      @assign="originalHandleAssign"
     />
 
     <ConfirmationModal

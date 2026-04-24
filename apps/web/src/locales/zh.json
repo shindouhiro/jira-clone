@@ -29,7 +29,10 @@
     "resolve_directly": "解决",
     "fix": "修复",
     "confirm_transition_title": "确认操作",
-    "confirm_transition_message": "你确定要对问题 {key} 进行状态流转吗？此操作将立即同步到 Jira。"
+    "confirm_transition_message": "你确定要对问题 {key} 进行状态流转吗？此操作将立即同步到 Jira。",
+    "assign": "分配",
+    "search_user": "搜索用户...",
+    "no_users_found": "未找到匹配的用户"
   },
   "detail": {
     "description": "描述",

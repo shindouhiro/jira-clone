@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import type { JiraIssue, JiraTransition } from '@jira/shared'
+import type { JiraIssue, JiraTransition, JiraUser } from '@jira/shared'
+import type { JiraClient } from '@jira/shared'
 import type { JiraAttachment } from '@/utils/issue'
+import { ref, computed, watch } from 'vue'
+import { useClipboard, onClickOutside, useDebounceFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { formatIssueDateTime, getPriorityColorClass } from '@/utils/issue'
 
@@ -19,18 +22,77 @@ interface Props {
   updatingKeys: Set<string>
   getStatusClass: (status: string) => string
   resolveAttachmentUrl: (url: string) => string
+  jira: JiraClient
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (event: 'close'): void
   (event: 'openPreview', url: string): void
   (event: 'closePreview'): void
   (event: 'transition', issueKey: string, transitionIds: string): void
+  (event: 'assign', issueKey: string, username: string | null): void
 }>()
 
 const { t } = useI18n()
+const { copy, copied } = useClipboard()
+
+const extractedUrls = computed(() => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const matches = props.cleanedDescription.match(urlRegex)
+  return matches ? [...new Set(matches)] : []
+})
+
+function copyToClipboard(text: string) {
+  copy(text)
+}
+
+// 分配逻辑
+const isAssignDropdownOpen = ref(false)
+const userSearchQuery = ref('')
+const assignableUsers = ref<JiraUser[]>([])
+const isSearchingUsers = ref(false)
+const dropdownRef = ref<HTMLElement | null>(null)
+
+onClickOutside(dropdownRef, () => {
+  isAssignDropdownOpen.value = false
+})
+
+const debouncedSearch = useDebounceFn(async (query: string) => {
+  if (!props.issueKey)
+    return
+  isSearchingUsers.value = true
+  try {
+    const { data } = await props.jira.findAssignableUsers(props.issueKey, query)
+    assignableUsers.value = data.value || []
+  }
+  catch (error) {
+    console.error('Failed to search users:', error)
+  }
+  finally {
+    isSearchingUsers.value = false
+  }
+}, 300)
+
+watch(userSearchQuery, (query) => {
+  void debouncedSearch(query)
+})
+
+function toggleAssignDropdown() {
+  isAssignDropdownOpen.value = !isAssignDropdownOpen.value
+  if (isAssignDropdownOpen.value) {
+    userSearchQuery.value = ''
+    void debouncedSearch('')
+  }
+}
+
+function handleAssignUser(username: string | null) {
+  if (!props.issueKey)
+    return
+  emit('assign', props.issueKey, username)
+  isAssignDropdownOpen.value = false
+}
 </script>
 
 <template>
@@ -76,9 +138,25 @@ const { t } = useI18n()
                 <h2 id="issue-detail-title" class="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
                   {{ issue.fields.summary }}
                 </h2>
-                <p v-if="cleanedDescription" class="text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed text-base">
-                  {{ cleanedDescription }}
-                </p>
+                <div v-if="cleanedDescription" class="space-y-4">
+                  <p class="text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed text-base">
+                    {{ cleanedDescription }}
+                  </p>
+                  
+                  <div v-if="extractedUrls.length" class="flex flex-wrap gap-2">
+                    <button
+                      v-for="url in extractedUrls"
+                      :key="url"
+                      class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-teal-50 dark:hover:bg-teal-500/10 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-200 dark:hover:border-teal-500/30 transition-all group"
+                      type="button"
+                      :title="t('common.copy_url') || 'Copy URL'"
+                      @click="copyToClipboard(url)"
+                    >
+                      <span :class="copied ? 'i-tabler-check text-teal-500' : 'i-tabler-copy text-gray-400 group-hover:text-teal-500'" class="text-sm transition-colors" />
+                      <span class="max-w-[250px] truncate">{{ url }}</span>
+                    </button>
+                  </div>
+                </div>
                 <p v-else class="text-gray-400 dark:text-gray-600 italic">
                   {{ t('detail.no_description') }}
                 </p>
@@ -192,11 +270,96 @@ const { t } = useI18n()
                   <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 font-bold mb-3">
                     {{ t('detail.assignee') }}
                   </p>
-                  <div class="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm font-bold">
-                    <div class="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-500 font-black text-xs">
-                      {{ issue.fields.assignee?.displayName.charAt(0) || 'U' }}
+                  <div class="flex items-center justify-between group/assignee">
+                    <div class="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm font-bold">
+                      <div class="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-500 font-black text-xs overflow-hidden">
+                        <img
+                          v-if="issue.fields.assignee?.avatarUrls?.['24x24']"
+                          :src="resolveAttachmentUrl(issue.fields.assignee.avatarUrls['24x24'])"
+                          :alt="issue.fields.assignee.displayName"
+                          class="w-full h-full object-cover"
+                        >
+                        <span v-else>{{ issue.fields.assignee?.displayName.charAt(0) || 'U' }}</span>
+                      </div>
+                      {{ issue.fields.assignee?.displayName || t('detail.unassigned') }}
                     </div>
-                    {{ issue.fields.assignee?.displayName || t('detail.unassigned') }}
+
+                    <div class="relative" ref="dropdownRef">
+                      <button
+                        id="issue-assign-button"
+                        class="flex items-center gap-1.5 px-2 py-1 bg-teal-500/5 hover:bg-teal-500/15 dark:bg-teal-500/10 dark:hover:bg-teal-500/20 rounded-lg transition-all text-teal-600 dark:text-teal-400 border border-teal-500/10 hover:border-teal-500/30"
+                        :class="{ 'ring-2 ring-teal-500/30 bg-teal-500/20': isAssignDropdownOpen }"
+                        type="button"
+                        @click="toggleAssignDropdown"
+                      >
+                        <div class="i-tabler-user-edit text-sm" />
+                        <span class="text-[10px] font-bold uppercase tracking-wider">{{ t('actions.assign') }}</span>
+                      </button>
+
+                      <Transition name="fade">
+                        <div
+                          v-if="isAssignDropdownOpen"
+                          class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-20 overflow-hidden backdrop-blur-xl"
+                        >
+                          <div class="p-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                            <div class="relative">
+                              <div class="absolute left-2.5 top-1/2 -translate-y-1/2 i-tabler-search text-gray-400 text-sm" />
+                              <input
+                                v-model="userSearchQuery"
+                                type="text"
+                                class="w-full bg-white dark:bg-gray-800 border-none rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-teal-500/50 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-inner"
+                                :placeholder="t('actions.search_user') || 'Search users...'"
+                                autofocus
+                              >
+                            </div>
+                          </div>
+                          <div class="max-h-60 overflow-y-auto p-1 bg-white dark:bg-gray-900">
+                            <button
+                              class="w-full flex items-center gap-3 p-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition text-left group"
+                              type="button"
+                              @click="handleAssignUser(null)"
+                            >
+                              <div class="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">
+                                <div class="i-tabler-user-off text-xs" />
+                              </div>
+                              <span class="text-xs font-bold text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100">
+                                {{ t('detail.unassigned') }}
+                              </span>
+                            </button>
+
+                            <div v-if="isSearchingUsers" class="flex items-center justify-center py-4">
+                              <div class="i-tabler-loader-2 animate-spin text-teal-500 text-sm" />
+                            </div>
+                            
+                            <template v-else>
+                              <button
+                                v-for="user in assignableUsers"
+                                :key="user.name"
+                                class="w-full flex items-center gap-3 p-2 bg-transparent hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-xl transition text-left group"
+                                type="button"
+                                @click="handleAssignUser(user.name)"
+                              >
+                                <div class="w-7 h-7 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400 overflow-hidden ring-1 ring-teal-500/20 group-hover:ring-teal-500/40 transition-all">
+                                  <img
+                                    v-if="user.avatarUrls?.['24x24']"
+                                    :src="resolveAttachmentUrl(user.avatarUrls['24x24'])"
+                                    :alt="user.displayName"
+                                    class="w-full h-full object-cover"
+                                  >
+                                  <span v-else>{{ user.displayName.charAt(0) }}</span>
+                                </div>
+                                <span class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+                                  {{ user.displayName }}
+                                </span>
+                              </button>
+                              <p v-if="assignableUsers.length === 0" class="text-center py-4 text-[10px] text-gray-400 font-medium">
+                                {{ t('actions.no_users_found') || 'No users found' }}
+                              </p>
+                            </template>
+                          </div>
+                        </div>
+                      </Transition>
+                    </div>
                   </div>
                 </div>
 

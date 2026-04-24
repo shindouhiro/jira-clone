@@ -93,6 +93,17 @@ function runTransition(transitionIds: string) {
             <div v-else :class="action.iconClass" />
             {{ action.label }}
           </button>
+
+          <button
+            :id="`issue-assign-${issue.key}`"
+            class="px-3 py-1.5 text-xs shadow-sm dark:shadow-none transition flex items-center justify-center gap-2 font-bold backdrop-blur-sm bg-teal-50/80 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/30 text-teal-700 dark:text-teal-300 rounded-lg hover:bg-teal-100 dark:hover:bg-teal-500/20 dark:hover:border-teal-400 dark:hover:text-teal-200 hover:shadow-[0_0_15px_rgba(20,184,166,0.2)] active:scale-95 min-w-72px"
+            type="button"
+            :disabled="isUpdating"
+            @click="openDetail"
+          >
+            <div class="i-tabler-user-edit" />
+            {{ t('actions.assign') }}
+          </button>
         </div>
       </aside>
     </div>

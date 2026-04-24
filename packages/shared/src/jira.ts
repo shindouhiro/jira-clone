@@ -41,6 +41,13 @@ export interface JiraIssue {
   }
 }
 
+export interface JiraUser {
+  name: string
+  key: string
+  displayName: string
+  avatarUrls: Record<string, string>
+}
+
 export interface JiraSearchResponse {
   issues: JiraIssue[]
   total: number
@@ -219,6 +226,74 @@ export class JiraClient {
     }
 
     return { error, execute, data }
+  }
+
+  /**
+   * 分配 Issue 给指定用户
+   */
+  assignIssue(issueKey: string, username: string | null) {
+    const url = `${this.baseUrl}/rest/api/2/issue/${issueKey}/assignee`
+    const error = ref<any>(null)
+    const data = ref<any>(null)
+
+    const execute = async () => {
+      error.value = null
+      try {
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Basic ${this.auth}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Atlassian-Token': 'no-check',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({
+            name: username,
+          }),
+        })
+
+        if (!res.ok) {
+          const text = await res.text()
+          try {
+            data.value = JSON.parse(text)
+          }
+          catch {
+            data.value = text
+          }
+          error.value = `HTTP ${res.status} ${res.statusText}`
+          return
+        }
+
+        // 成功时返回 204 No Content
+        if (res.status !== 204) {
+          data.value = await res.json()
+        }
+      }
+      catch (err: any) {
+        error.value = err.message || 'Network error'
+      }
+    }
+
+    return { error, execute, data }
+  }
+
+  /**
+   * 查找可分配的用户
+   */
+  findAssignableUsers(issueKey: string, query = '') {
+    const params = new URLSearchParams({
+      issueKey,
+      username: query,
+    })
+    const url = `${this.baseUrl}/rest/api/2/user/assignable/search?${params.toString()}`
+
+    return useFetch(url, {
+      headers: {
+        Authorization: `Basic ${this.auth}`,
+        Accept: 'application/json',
+      },
+    }).get().json<JiraUser[]>()
   }
 
   /**
