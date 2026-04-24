@@ -11,9 +11,7 @@ export interface JiraIssue {
     priority: {
       name: string
     }
-    assignee?: {
-      displayName: string
-    }
+    assignee?: JiraUser
     project: {
       key: string
       name: string
@@ -31,9 +29,7 @@ export interface JiraIssue {
     }>
     comment?: {
       comments: Array<{
-        author: {
-          displayName: string
-        }
+        author: JiraUser
         body: string
         created: string
       }>
