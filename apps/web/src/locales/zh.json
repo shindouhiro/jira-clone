@@ -1,0 +1,41 @@
+{
+  "common": {
+    "refresh": "刷新",
+    "refreshing": "刷新中...",
+    "all_projects": "所有我的项目",
+    "loading_projects": "加载项目中...",
+    "unresolved_only": "仅显示未解决",
+    "no_bugs": "未找到相关 Bug",
+    "all_caught_up": "你已处理完所有任务！去喝杯咖啡吧。",
+    "error_fetch": "获取数据失败，请检查网络或登录状态",
+    "actions": "操作",
+    "loading_bugs": "正在抓取 Bug 列表..."
+  },
+  "status": {
+    "to_do": "待办",
+    "in_progress": "进行中",
+    "done": "已完成",
+    "resolved": "已解决",
+    "open": "开放"
+  },
+  "actions": {
+    "start_progress": "开始处理",
+    "resolve": "解决",
+    "reopen": "重新打开",
+    "close": "关闭"
+  },
+  "detail": {
+    "description": "描述",
+    "no_description": "无描述内容",
+    "attachments": "附件",
+    "comments": "评论",
+    "status": "状态",
+    "priority": "优先级",
+    "assignee": "负责人",
+    "unassigned": "未分配",
+    "created": "创建时间",
+    "updated": "更新时间",
+    "quick_transitions": "快速流转",
+    "loading_high_res": "正在加载高清图片..."
+  }
+}

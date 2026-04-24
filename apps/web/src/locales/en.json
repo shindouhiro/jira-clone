@@ -1,0 +1,41 @@
+{
+  "common": {
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "all_projects": "All My Projects",
+    "loading_projects": "Loading My Projects...",
+    "unresolved_only": "Unresolved Only",
+    "no_bugs": "No bugs found",
+    "all_caught_up": "You're all caught up! Go grab a coffee.",
+    "error_fetch": "Failed to fetch data, please check your network or login status",
+    "actions": "Actions",
+    "loading_bugs": "Fetching your bugs..."
+  },
+  "status": {
+    "to_do": "To Do",
+    "in_progress": "In Progress",
+    "done": "Done",
+    "resolved": "Resolved",
+    "open": "Open"
+  },
+  "actions": {
+    "start_progress": "Start Progress",
+    "resolve": "Resolve",
+    "reopen": "Reopen",
+    "close": "Close"
+  },
+  "detail": {
+    "description": "Description",
+    "no_description": "No description provided.",
+    "attachments": "Attachments",
+    "comments": "Comments",
+    "status": "Status",
+    "priority": "Priority",
+    "assignee": "Assignee",
+    "unassigned": "Unassigned",
+    "created": "Created",
+    "updated": "Updated",
+    "quick_transitions": "Quick Transitions",
+    "loading_high_res": "Loading High-Res Image..."
+  }
+}

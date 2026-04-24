@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { JiraClient } from '@jira/shared'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t, locale } = useI18n()
+
+function toggleLanguage() {
+  locale.value = locale.value === 'zh' ? 'en' : 'zh'
+}
 
 const jira = new JiraClient('wuweidong', 'Wu83609045@')
 
@@ -132,7 +139,7 @@ watch(selectedIssue, async (newIssue) => {
 const errorMessage = computed(() => {
   if (!fetchError.value)
     return null
-  return '获取数据失败，请检查网络或登录状态'
+  return t('common.error_fetch')
 })
 
 // 状态修改逻辑
@@ -194,8 +201,19 @@ const cleanedDescription = computed(() => {
           </p>
         </div>
 
-        <!-- Filters -->
+        <!-- Filters & Language -->
         <div class="flex flex-wrap items-center gap-4 bg-gray-900/50 p-4 rounded-2xl border border-gray-800">
+          <!-- Language Toggle -->
+          <button
+            class="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-800 border border-gray-700 hover:border-teal-500/50 hover:bg-teal-500/5 transition-all text-sm font-bold text-gray-400 hover:text-teal-400"
+            @click="toggleLanguage"
+          >
+            <div class="i-tabler-language text-lg group-hover:rotate-12 transition-transform" />
+            <span class="uppercase">{{ locale === 'zh' ? '中' : 'EN' }}</span>
+          </button>
+
+          <div class="w-px h-6 bg-gray-800 mx-1 hidden sm:block" />
+
           <div class="flex items-center gap-2">
             <div class="i-tabler-filter text-gray-500" />
             <div class="relative min-w-48">
@@ -205,7 +223,7 @@ const cleanedDescription = computed(() => {
                 :disabled="isInitialLoading"
               >
                 <option value="" class="bg-gray-800 text-gray-200">
-                  {{ isInitialLoading ? 'Loading My Projects...' : 'All My Projects' }}
+                  {{ isInitialLoading ? t('common.loading_projects') : t('common.all_projects') }}
                 </option>
                 <option v-for="p in myProjects" :key="p.key" :value="p.key" class="bg-gray-800 text-gray-200">
                   {{ p.name }}
@@ -229,7 +247,9 @@ const cleanedDescription = computed(() => {
                 :class="unresolvedOnly ? 'translate-x-5' : 'translate-x-0'"
               />
             </div>
-            <span class="text-sm font-medium" :class="unresolvedOnly ? 'text-teal-400' : 'text-gray-500'">Unresolved Only</span>
+            <span class="text-sm font-medium" :class="unresolvedOnly ? 'text-teal-400' : 'text-gray-500'">
+              {{ t('common.unresolved_only') }}
+            </span>
           </label>
 
           <div class="w-px h-6 bg-gray-800 mx-2 hidden sm:block" />
@@ -241,7 +261,7 @@ const cleanedDescription = computed(() => {
           >
             <div v-if="isFetching" class="i-tabler-loader-2 animate-spin" />
             <div v-else class="i-tabler-refresh" />
-            {{ isFetching ? 'Refreshing...' : 'Refresh' }}
+            {{ isFetching ? t('common.refreshing') : t('common.refresh') }}
           </button>
         </div>
       </header>
@@ -258,7 +278,7 @@ const cleanedDescription = computed(() => {
       <div v-if="isFetching && issues.length === 0" class="flex flex-col items-center justify-center py-20 gap-4">
         <div class="i-tabler-loader-2 text-5xl text-teal-500 animate-spin" />
         <p class="text-gray-500 animate-pulse">
-          Fetching your bugs...
+          {{ t('common.loading_bugs') }}
         </p>
       </div>
 
@@ -292,7 +312,7 @@ const cleanedDescription = computed(() => {
                 <div class="flex flex-wrap gap-4 text-sm text-gray-500">
                   <span class="flex items-center gap-1.5">
                     <div class="i-tabler-user text-gray-600" />
-                    {{ issue.fields.assignee?.displayName || 'Unassigned' }}
+                    {{ issue.fields.assignee?.displayName || t('detail.unassigned') }}
                   </span>
                   <span class="flex items-center gap-1.5">
                     <div class="i-tabler-alert-triangle text-gray-600" />
@@ -308,7 +328,7 @@ const cleanedDescription = computed(() => {
               <!-- Action Buttons -->
               <div class="flex flex-col justify-center gap-2 min-w-140px" @click.stop>
                 <p class="text-[10px] uppercase tracking-widest text-gray-600 font-bold mb-1">
-                  Actions
+                  {{ t('common.actions') }}
                 </p>
                 <div class="flex flex-wrap md:flex-col gap-2">
                   <button
@@ -316,21 +336,21 @@ const cleanedDescription = computed(() => {
                     class="px-3 py-1.5 text-xs rounded-lg bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-2"
                     @click="handleTransition(issue.key, '21')"
                   >
-                    <div class="i-tabler-player-play" /> Start Progress
+                    <div class="i-tabler-player-play" /> {{ t('actions.start_progress') }}
                   </button>
                   <button
                     v-if="issue.fields.status.name !== 'Done' && issue.fields.status.name !== 'Resolved'"
                     class="px-3 py-1.5 text-xs rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-black transition-all flex items-center gap-2"
                     @click="handleTransition(issue.key, '31')"
                   >
-                    <div class="i-tabler-check" /> Resolve
+                    <div class="i-tabler-check" /> {{ t('actions.resolve') }}
                   </button>
                   <button
                     v-if="issue.fields.status.name === 'Done' || issue.fields.status.name === 'Resolved' || issue.fields.status.name === 'In Progress'"
                     class="px-3 py-1.5 text-xs rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all flex items-center gap-2"
                     @click="handleTransition(issue.key, '11')"
                   >
-                    <div class="i-tabler-arrow-back-up" /> Reopen
+                    <div class="i-tabler-arrow-back-up" /> {{ t('actions.reopen') }}
                   </button>
                 </div>
               </div>
@@ -343,10 +363,10 @@ const cleanedDescription = computed(() => {
       <div v-if="!isFetching && issues.length === 0" class="text-center py-20 border-2 border-dashed border-gray-800 rounded-3xl">
         <div class="i-tabler-mood-empty text-5xl text-gray-700 mx-auto mb-4" />
         <h3 class="text-xl font-bold text-gray-400">
-          No bugs found
+          {{ t('common.no_bugs') }}
         </h3>
         <p class="text-gray-600">
-          You're all caught up! Go grab a coffee.
+          {{ t('common.all_caught_up') }}
         </p>
       </div>
     </div>
@@ -386,7 +406,7 @@ const cleanedDescription = computed(() => {
                       {{ cleanedDescription }}
                     </p>
                     <p v-else class="text-gray-600 italic">
-                      No description provided.
+                      {{ t('detail.no_description') }}
                     </p>
                   </div>
                 </section>
@@ -395,7 +415,7 @@ const cleanedDescription = computed(() => {
                 <section v-if="images.length || otherFiles.length" class="space-y-6 pt-6 border-t border-gray-800">
                   <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 flex items-center gap-2">
                     <div class="i-tabler-paperclip" />
-                    Attachments ({{ selectedIssue.fields.attachment?.length }})
+                    {{ t('detail.attachments') }} ({{ selectedIssue.fields.attachment?.length }})
                   </h4>
 
                   <!-- Image Gallery -->
@@ -448,9 +468,9 @@ const cleanedDescription = computed(() => {
                 </section>
 
                 <section v-if="selectedIssue.fields.comment?.comments.length" class="space-y-6">
-                  <h4 class="text-sm font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                  <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 flex items-center gap-2">
                     <div class="i-tabler-messages" />
-                    Comments ({{ selectedIssue.fields.comment.comments.length }})
+                    {{ t('detail.comments') }} ({{ selectedIssue.fields.comment.comments.length }})
                   </h4>
                   <div class="space-y-4">
                     <div v-for="comment in selectedIssue.fields.comment.comments" :key="comment.created" class="bg-gray-800/30 p-4 rounded-2xl border border-gray-800/50">
@@ -471,7 +491,7 @@ const cleanedDescription = computed(() => {
                 <div class="bg-gray-800/40 p-6 rounded-2xl border border-gray-800/50 space-y-6">
                   <div>
                     <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-3">
-                      Status
+                      {{ t('detail.status') }}
                     </p>
                     <span class="px-3 py-1 rounded-full border text-xs font-medium inline-block" :class="getStatusClass(selectedIssue.fields.status.name)">
                       {{ selectedIssue.fields.status.name }}
@@ -480,7 +500,7 @@ const cleanedDescription = computed(() => {
 
                   <div>
                     <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-3">
-                      Priority
+                      {{ t('detail.priority') }}
                     </p>
                     <div class="flex items-center gap-2 text-gray-300 text-sm font-medium">
                       <div class="i-tabler-alert-triangle text-yellow-500" />
@@ -490,23 +510,23 @@ const cleanedDescription = computed(() => {
 
                   <div>
                     <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-3">
-                      Assignee
+                      {{ t('detail.assignee') }}
                     </p>
                     <div class="flex items-center gap-3 text-gray-300 text-sm font-medium">
                       <div class="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-500 font-bold text-xs">
                         {{ selectedIssue.fields.assignee?.displayName.charAt(0) || 'U' }}
                       </div>
-                      {{ selectedIssue.fields.assignee?.displayName || 'Unassigned' }}
+                      {{ selectedIssue.fields.assignee?.displayName || t('detail.unassigned') }}
                     </div>
                   </div>
 
                   <div class="pt-6 border-t border-gray-800/50 space-y-4 text-[11px] text-gray-500">
                     <div class="flex justify-between items-center">
-                      <span class="opacity-60">Created</span>
+                      <span class="opacity-60">{{ t('detail.created') }}</span>
                       <span class="text-gray-400 font-mono">{{ new Date(selectedIssue.fields.created).toLocaleString() }}</span>
                     </div>
                     <div class="flex justify-between items-center">
-                      <span class="opacity-60">Updated</span>
+                      <span class="opacity-60">{{ t('detail.updated') }}</span>
                       <span class="text-gray-400 font-mono">{{ new Date(selectedIssue.fields.updated).toLocaleString() }}</span>
                     </div>
                   </div>
@@ -515,7 +535,7 @@ const cleanedDescription = computed(() => {
                 <!-- Modal Actions -->
                 <div class="space-y-4 px-2">
                   <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">
-                    Quick Transitions
+                    {{ t('detail.quick_transitions') }}
                   </p>
                   <div class="grid grid-cols-1 gap-2.5">
                     <button
@@ -523,21 +543,21 @@ const cleanedDescription = computed(() => {
                       class="px-4 py-2.5 text-sm rounded-xl bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-3"
                       @click="handleTransition(selectedIssue.key, '21')"
                     >
-                      <div class="i-tabler-player-play" /> Start Progress
+                      <div class="i-tabler-player-play" /> {{ t('actions.start_progress') }}
                     </button>
                     <button
                       v-if="selectedIssue.fields.status.name !== 'Done' && selectedIssue.fields.status.name !== 'Resolved'"
                       class="px-4 py-2.5 text-sm rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-black transition-all flex items-center gap-3"
                       @click="handleTransition(selectedIssue.key, '31')"
                     >
-                      <div class="i-tabler-check" /> Resolve
+                      <div class="i-tabler-check" /> {{ t('actions.resolve') }}
                     </button>
                     <button
                       v-if="selectedIssue.fields.status.name === 'Done' || selectedIssue.fields.status.name === 'Resolved' || selectedIssue.fields.status.name === 'In Progress'"
                       class="px-4 py-2.5 text-sm rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all flex items-center gap-3"
                       @click="handleTransition(selectedIssue.key, '11')"
                     >
-                      <div class="i-tabler-arrow-back-up" /> Reopen
+                      <div class="i-tabler-arrow-back-up" /> {{ t('actions.reopen') }}
                     </button>
                   </div>
                 </div>
@@ -560,7 +580,7 @@ const cleanedDescription = computed(() => {
         <div v-if="previewImageUrl === 'loading'" class="flex flex-col items-center gap-4">
           <div class="i-tabler-loader-2 text-5xl text-teal-500 animate-spin" />
           <p class="text-teal-500 font-bold animate-pulse">
-            Loading High-Res Image...
+            {{ t('detail.loading_high_res') }}
           </p>
         </div>
         <img v-else :src="previewImageUrl" class="max-w-[95vw] max-h-[95vh] object-contain shadow-2xl rounded-lg" @click.stop>
