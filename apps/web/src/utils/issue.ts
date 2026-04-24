@@ -57,7 +57,7 @@ export function resolveQuickActions(statusName: string, t: (key: string) => stri
       label: t('actions.resolve_directly'),
       transitionIds,
       iconClass: 'i-tabler-player-play',
-      className: 'bg-yellow-50/50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border-yellow-200/60 dark:border-yellow-500/20 hover:bg-yellow-100 dark:hover:bg-yellow-500/20 hover:text-yellow-700 dark:hover:text-yellow-400',
+      className: 'backdrop-blur-sm bg-amber-50/80 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-lg px-3 py-1.5 transition duration-300 hover:bg-amber-100 dark:hover:bg-amber-500/15 dark:hover:border-amber-400 dark:hover:text-amber-300 hover:shadow-[0_0_15px_rgba(245,158,11,0.15)] active:scale-95',
     }]
   }
 
@@ -67,7 +67,7 @@ export function resolveQuickActions(statusName: string, t: (key: string) => stri
       label: t('actions.resolve'),
       transitionIds: '21',
       iconClass: 'i-tabler-check',
-      className: 'bg-green-50/50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200/60 dark:border-green-500/20 hover:bg-green-100 dark:hover:bg-green-500/20 hover:text-green-700 dark:hover:text-green-300',
+      className: 'backdrop-blur-sm bg-green-50/80 dark:bg-green-500/5 border border-green-200 dark:border-green-500/40 text-green-600 dark:text-green-400 rounded-lg px-3 py-1.5 transition duration-300 hover:bg-green-100 dark:hover:bg-green-500/15 dark:hover:border-green-400 dark:hover:text-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.15)] active:scale-95',
     }]
   }
 
@@ -77,7 +77,7 @@ export function resolveQuickActions(statusName: string, t: (key: string) => stri
       label: t('actions.start_testing'),
       transitionIds: '31',
       iconClass: 'i-tabler-test-pipe',
-      className: 'bg-teal-50/50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-200/60 dark:border-teal-500/20 hover:bg-teal-100 dark:hover:bg-teal-500/20 hover:text-teal-700 dark:hover:text-teal-300',
+      className: 'backdrop-blur-sm bg-blue-50/80 dark:bg-blue-500/5 border border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-400 rounded-lg px-3 py-1.5 transition duration-300 hover:bg-blue-100 dark:hover:bg-blue-500/15 dark:hover:border-blue-400 dark:hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] active:scale-95',
     }]
   }
 
@@ -90,4 +90,15 @@ export function formatIssueDate(value: string) {
 
 export function formatIssueDateTime(value: string) {
   return new Date(value).toLocaleString()
+}
+
+export function getPriorityColorClass(priorityName?: string) {
+  const name = (priorityName || '').toLowerCase()
+  if (name.includes('high') || name === '最高' || name === '高' || name === '严重' || name.includes('critical'))
+    return 'text-red-500 dark:text-red-400'
+  if (name.includes('medium') || name === '中')
+    return 'text-amber-500 dark:text-amber-400'
+  if (name.includes('low') || name === '最低' || name === '低' || name.includes('minor'))
+    return 'text-teal-500 dark:text-teal-400'
+  return 'text-gray-500 dark:text-gray-400'
 }

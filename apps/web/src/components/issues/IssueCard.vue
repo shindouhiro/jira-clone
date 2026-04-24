@@ -2,7 +2,7 @@
 import type { JiraIssue } from '@jira/shared'
 import type { QuickTransitionAction } from '@/utils/issue'
 import { useI18n } from 'vue-i18n'
-import { formatIssueDate } from '@/utils/issue'
+import { formatIssueDate, getPriorityColorClass } from '@/utils/issue'
 
 interface Props {
   issue: JiraIssue
@@ -64,8 +64,8 @@ function runTransition(transitionIds: string) {
             <span>{{ issue.fields.assignee?.displayName || t('detail.unassigned') }}</span>
           </li>
           <li class="flex items-center gap-1.5">
-            <span class="i-tabler-alert-triangle text-gray-500 dark:text-gray-400" />
-            <span>{{ issue.fields.priority.name }}</span>
+            <span class="i-tabler-alert-triangle" :class="getPriorityColorClass(issue.fields.priority.name)" />
+            <span :class="getPriorityColorClass(issue.fields.priority.name)">{{ issue.fields.priority.name }}</span>
           </li>
           <li class="flex items-center gap-1.5">
             <span class="i-tabler-calendar text-gray-500 dark:text-gray-400" />
@@ -74,16 +74,16 @@ function runTransition(transitionIds: string) {
         </ul>
       </section>
 
-      <aside class="flex flex-col justify-center gap-2 min-w-140px" @click.stop>
-        <p class="text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-600 font-bold mb-1">
+      <aside class="flex flex-col justify-center gap-2 items-end min-w-80px" @click.stop>
+        <p class="text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-600 font-bold mb-1 mr-1">
           {{ t('common.actions') }}
         </p>
-        <div class="flex flex-wrap md:flex-col gap-2">
+        <div class="flex flex-wrap md:flex-col gap-2 items-end">
           <button
             v-for="action in quickActions"
             :id="`issue-action-${issue.key}-${action.key}`"
             :key="action.key"
-            class="px-3 py-1.5 text-xs rounded-lg border shadow-sm dark:shadow-none transition-all flex items-center gap-2 font-bold disabled:opacity-50"
+            class="px-3 py-1.5 text-xs shadow-sm dark:shadow-none transition flex items-center justify-center gap-2 font-bold disabled:opacity-50 min-w-72px"
             :class="action.className"
             :disabled="isUpdating"
             type="button"

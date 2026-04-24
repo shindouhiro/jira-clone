@@ -9,7 +9,9 @@
     "all_caught_up": "你已处理完所有任务！去喝杯咖啡吧。",
     "error_fetch": "获取数据失败，请检查网络或登录状态",
     "actions": "操作",
-    "loading_bugs": "正在抓取 Bug 列表..."
+    "loading_bugs": "正在抓取 Bug 列表...",
+    "confirm": "确定",
+    "cancel": "取消"
   },
   "status": {
     "to_do": "待办",
@@ -19,13 +21,15 @@
     "open": "开放"
   },
   "actions": {
-    "start_progress": "开始处理",
-    "resolve": "已经修复",
-    "reopen": "重新打开",
+    "start_progress": "处理",
+    "resolve": "修复",
+    "reopen": "开启",
     "close": "关闭",
-    "start_testing": "开始测试",
-    "resolve_directly": "直接解决 (已解决)",
-    "fix": "修复"
+    "start_testing": "测试",
+    "resolve_directly": "解决",
+    "fix": "修复",
+    "confirm_transition_title": "确认操作",
+    "confirm_transition_message": "你确定要对问题 {key} 进行状态流转吗？此操作将立即同步到 Jira。"
   },
   "detail": {
     "description": "描述",

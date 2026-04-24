@@ -9,7 +9,9 @@
     "all_caught_up": "You're all caught up! Go grab a coffee.",
     "error_fetch": "Failed to fetch data, please check your network or login status",
     "actions": "Actions",
-    "loading_bugs": "Fetching your bugs..."
+    "loading_bugs": "Fetching your bugs...",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   },
   "status": {
     "to_do": "To Do",
@@ -25,7 +27,9 @@
     "close": "Close",
     "start_testing": "Start Testing",
     "resolve_directly": "Resolve Directly",
-    "fix": "Fix"
+    "fix": "Fix",
+    "confirm_transition_title": "Confirm Action",
+    "confirm_transition_message": "Are you sure you want to transition {key}? This action will be synced to Jira immediately."
   },
   "detail": {
     "description": "Description",

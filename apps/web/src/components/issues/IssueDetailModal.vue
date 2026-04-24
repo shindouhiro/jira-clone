@@ -2,7 +2,7 @@
 import type { JiraIssue, JiraTransition } from '@jira/shared'
 import type { JiraAttachment } from '@/utils/issue'
 import { useI18n } from 'vue-i18n'
-import { formatIssueDateTime } from '@/utils/issue'
+import { formatIssueDateTime, getPriorityColorClass } from '@/utils/issue'
 
 interface Props {
   issueKey: string | null
@@ -106,6 +106,9 @@ const { t } = useI18n()
                       v-if="imageThumbnails[image.thumbnail || image.content]"
                       :src="imageThumbnails[image.thumbnail || image.content]"
                       :alt="image.filename"
+                      width="400"
+                      height="225"
+                      loading="lazy"
                       class="absolute inset-0 w-full h-full object-cover"
                     >
                     <div class="absolute inset-0 bg-black/5 dark:bg-black/20 group-hover:bg-black/0 transition-colors" />
@@ -125,7 +128,7 @@ const { t } = useI18n()
                     :href="resolveAttachmentUrl(file.content)"
                     target="_blank"
                     rel="noreferrer"
-                    class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:border-gray-200 dark:hover:border-gray-700 transition-all group"
+                    class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:border-gray-200 dark:hover:border-gray-700 transition group"
                   >
                     <span class="i-tabler-file text-gray-500 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400" />
                     <span class="flex-1 min-w-0">
@@ -179,8 +182,8 @@ const { t } = useI18n()
                   <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 font-bold mb-3">
                     {{ t('detail.priority') }}
                   </p>
-                  <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm font-bold">
-                    <span class="i-tabler-alert-triangle text-yellow-500" />
+                  <div class="flex items-center gap-2 text-sm font-bold" :class="getPriorityColorClass(issue.fields.priority.name)">
+                    <span class="i-tabler-alert-triangle" />
                     {{ issue.fields.priority.name }}
                   </div>
                 </div>
@@ -229,7 +232,7 @@ const { t } = useI18n()
                     v-for="transitionItem in transitions"
                     :id="`issue-detail-transition-${issue.key}-${transitionItem.id}`"
                     :key="transitionItem.id"
-                    class="px-4 py-2.5 text-sm rounded-xl bg-white dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-500/20 hover:bg-teal-50 dark:hover:bg-teal-500 hover:text-teal-700 dark:hover:text-black shadow-sm dark:shadow-none transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                    class="px-4 py-2.5 text-sm rounded-xl bg-white dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-500/20 hover:bg-teal-50 dark:hover:bg-teal-500 hover:text-teal-700 dark:hover:text-black shadow-sm dark:shadow-none transition flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                     :disabled="updatingKeys.has(issue.key)"
                     type="button"
                     @click="emit('transition', issue.key, transitionItem.id)"
@@ -275,6 +278,9 @@ const { t } = useI18n()
             id="issue-preview-image"
             :src="previewImageUrl"
             alt="Issue attachment preview"
+            width="1200"
+            height="800"
+            loading="lazy"
             class="max-w-[95vw] max-h-[95vh] object-contain shadow-2xl rounded-lg"
             @click.stop
           >

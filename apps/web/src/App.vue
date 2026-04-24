@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useDark, useToggle } from '@vueuse/core'
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DashboardHeader from '@/components/issues/DashboardHeader.vue'
 import IssueDetailModal from '@/components/issues/IssueDetailModal.vue'
 import IssueListSection from '@/components/issues/IssueListSection.vue'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 import { useIssueAttachments } from '@/composables/useIssueAttachments'
 import { useJiraDashboard } from '@/composables/useJiraDashboard'
 import { cleanJiraDescription, getStatusClass, resolveQuickActions } from '@/utils/issue'
@@ -13,6 +14,15 @@ const username = 'wuweidong'
 const password = 'Wu83609045@'
 
 const { t, locale } = useI18n()
+
+// 确认弹窗状态
+const confirmState = ref({
+  show: false,
+  title: '',
+  message: '',
+  issueKey: '',
+  transitionIds: '',
+})
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
@@ -46,8 +56,29 @@ const {
   errorMessage,
   updatingKeys,
   transitionError,
-  handleTransition,
+  handleTransition: originalHandleTransition,
 } = dashboard
+
+// 包装原有的流转逻辑，加入确认步骤
+function handleTransitionWithConfirm(issueKey: string, transitionIds: string) {
+  confirmState.value = {
+    show: true,
+    title: t('actions.confirm_transition_title'),
+    message: t('actions.confirm_transition_message', { key: issueKey }),
+    issueKey,
+    transitionIds,
+  }
+}
+
+function onConfirmTransition() {
+  const { issueKey, transitionIds } = confirmState.value
+  confirmState.value.show = false
+  void originalHandleTransition(issueKey, transitionIds)
+}
+
+function onCancelTransition() {
+  confirmState.value.show = false
+}
 
 const attachments = useIssueAttachments({
   jira,
@@ -133,7 +164,7 @@ function refreshIssues() {
           :get-status-class="getStatusClass"
           :get-quick-actions="getQuickActions"
           @open-detail="openDetail"
-          @transition="handleTransition"
+          @transition="handleTransitionWithConfirm"
         />
       </main>
     </div>
@@ -156,7 +187,15 @@ function refreshIssues() {
       @close="closeDetail"
       @open-preview="openPreview"
       @close-preview="closePreview"
-      @transition="handleTransition"
+      @transition="handleTransitionWithConfirm"
+    />
+
+    <ConfirmationModal
+      :show="confirmState.show"
+      :title="confirmState.title"
+      :message="confirmState.message"
+      @confirm="onConfirmTransition"
+      @cancel="onCancelTransition"
     />
   </div>
 </template>
@@ -174,7 +213,7 @@ function refreshIssues() {
 
 .list-enter-active,
 .list-leave-active {
-  transition: all 0.5s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .list-enter-from,
@@ -186,13 +225,5 @@ function refreshIssues() {
 body {
   margin: 0;
   @apply bg-white dark:bg-[#0a0a0a];
-}
-
-.btn {
-  @apply px-4 py-1.5 rounded-xl bg-teal-600 text-white font-bold transition-all hover:bg-teal-500 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
-}
-
-.card {
-  @apply bg-white dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800/50 p-6 rounded-3xl transition-all hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-none hover:border-teal-500/30 dark:hover:border-gray-700 shadow-sm dark:shadow-none;
 }
 </style>

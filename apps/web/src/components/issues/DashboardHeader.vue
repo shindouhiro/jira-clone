@@ -84,7 +84,7 @@ const unresolvedOnlyModel = computed({
     >
       <button
         id="dashboard-theme-toggle"
-        class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-inner transition-colors focus:outline-none hover:bg-gray-200 dark:hover:bg-gray-700"
+        class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-inner transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 hover:bg-gray-200 dark:hover:bg-gray-700"
         :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
         type="button"
         @click="emit('toggleTheme')"
@@ -94,8 +94,8 @@ const unresolvedOnlyModel = computed({
           class="pointer-events-none absolute left-0.5 flex h-6 w-6 transform items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/10 transition duration-300 ease-in-out"
           :class="isDark ? 'translate-x-5' : 'translate-x-0'"
         >
-          <div class="i-tabler-sun text-yellow-500 text-[13px] transition-all duration-300" :class="isDark ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100'" />
-          <div class="i-tabler-moon text-teal-400 text-[13px] transition-all duration-300" :class="isDark ? 'opacity-100 scale-100' : 'opacity-0 scale-50 absolute'" />
+          <div class="i-tabler-sun text-yellow-500 text-[13px] transition duration-300" :class="isDark ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100'" />
+          <div class="i-tabler-moon text-teal-400 text-[13px] transition duration-300" :class="isDark ? 'opacity-100 scale-100' : 'opacity-0 scale-50 absolute'" />
         </span>
       </button>
 
@@ -103,7 +103,7 @@ const unresolvedOnlyModel = computed({
 
       <button
         id="dashboard-language-toggle"
-        class="group flex items-center gap-2 px-3 py-1.5 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-teal-500/50 hover:bg-teal-50 dark:hover:bg-teal-500/5 transition-all text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400"
+        class="group flex items-center gap-2 px-3 py-1.5 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-teal-500/50 hover:bg-teal-50 dark:hover:bg-teal-500/5 transition text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400"
         type="button"
         @click="emit('toggleLanguage')"
       >
@@ -114,7 +114,9 @@ const unresolvedOnlyModel = computed({
       <div class="w-px h-6 bg-gray-200 dark:bg-gray-800 mx-1 hidden sm:block" />
 
       <div class="flex items-center gap-2">
-        <label for="dashboard-project-filter" class="i-tabler-filter text-gray-500 dark:text-gray-500" />
+        <label for="dashboard-project-filter" class="i-tabler-filter text-gray-500 dark:text-gray-500">
+          <span class="sr-only">{{ t('common.project_filter') || 'Project filter' }}</span>
+        </label>
         <div class="relative min-w-48">
           <select
             id="dashboard-project-filter"
