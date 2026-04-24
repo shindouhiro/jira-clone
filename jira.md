@@ -1,2 +1,4 @@
 - 本地搭建的jira地址http://jira.cloudtogo.local/
-- 我需要通过账户 wuweidong Wu83609045@ 获取bug列表
+- 我需要通过账户 wuweidong Wu83609045@ 拿到token
+- 通说api获取bug列表
+- 我的jira版本v8.7.1
