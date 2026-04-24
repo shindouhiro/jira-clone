@@ -20,6 +20,14 @@ export interface JiraIssue {
     description: string
     created: string
     updated: string
+    attachment?: Array<{
+      id: string
+      filename: string
+      mimeType: string
+      thumbnail?: string
+      content: string
+      size: number
+    }>
     comment?: {
       comments: Array<{
         author: {
@@ -42,6 +50,33 @@ export class JiraClient {
 
   constructor(username: string, password: string, private baseUrl: string = '/api-jira') {
     this.auth = btoa(`${username}:${password}`)
+  }
+
+  getAuthHeaders() {
+    return {
+      Authorization: `Basic ${this.auth}`,
+    }
+  }
+
+  /**
+   * 将 Jira 绝对路径转换为代理路径
+   */
+  resolveUrl(url: string) {
+    if (!url)
+      return url
+    // 如果 URL 是以 http 开头的绝对路径，尝试将其转换为相对代理路径
+    // 假设原始主机名是 jira.cloudtogo.local (根据用户反馈)
+    // 或者更通用的做法：如果包含 /rest/ 或 /secure/，且不是以 baseUrl 开头，则替换
+    if (url.startsWith('http') && !url.startsWith(this.baseUrl)) {
+      try {
+        const u = new URL(url)
+        return `${this.baseUrl}${u.pathname}${u.search}`
+      }
+      catch {
+        return url
+      }
+    }
+    return url
   }
 
   /**

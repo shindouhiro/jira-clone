@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { JiraClient } from '@jira/shared'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const jira = new JiraClient('wuweidong', 'Wu83609045@')
 
@@ -55,6 +55,79 @@ function closeDetail() {
 
 const selectedIssue = computed(() => detailData.value)
 
+// 附件相关逻辑
+const images = computed(() => {
+  return selectedIssue.value?.fields.attachment?.filter((a) => {
+    const isMimeImage = a.mimeType.startsWith('image/')
+    const isExtImage = /\.(?:png|jpe?g|gif|webp|bmp|svg)$/i.test(a.filename)
+    return isMimeImage || isExtImage
+  }) || []
+})
+
+const otherFiles = computed(() => {
+  return selectedIssue.value?.fields.attachment?.filter((a) => {
+    const isMimeImage = a.mimeType.startsWith('image/')
+    const isExtImage = /\.(?:png|jpe?g|gif|webp|bmp|svg)$/i.test(a.filename)
+    return !isMimeImage && !isExtImage
+  }) || []
+})
+
+// 图片预览状态
+const previewImageUrl = ref<string | null>(null)
+const isLoadingPreview = ref(false)
+
+async function openPreview(url: string) {
+  isLoadingPreview.value = true
+  previewImageUrl.value = 'loading'
+  try {
+    const proxiedUrl = jira.resolveUrl(url)
+    const res = await fetch(proxiedUrl, { headers: jira.getAuthHeaders() })
+    const blob = await res.blob()
+    previewImageUrl.value = URL.createObjectURL(blob)
+  }
+  finally {
+    isLoadingPreview.value = false
+  }
+}
+
+function closePreview() {
+  if (previewImageUrl.value && previewImageUrl.value !== 'loading') {
+    URL.revokeObjectURL(previewImageUrl.value)
+  }
+  previewImageUrl.value = null
+}
+
+const imageThumbnails = ref<Record<string, string>>({})
+watch(selectedIssue, async (newIssue) => {
+  if (!newIssue) {
+    Object.values(imageThumbnails.value).forEach(URL.revokeObjectURL)
+    imageThumbnails.value = {}
+    return
+  }
+
+  const imgs = newIssue.fields.attachment?.filter((a) => {
+    const isMimeImage = a.mimeType.startsWith('image/')
+    const isExtImage = /\.(?:png|jpe?g|gif|webp|bmp|svg)$/i.test(a.filename)
+    return isMimeImage || isExtImage
+  }) || []
+
+  for (const img of imgs) {
+    const originalUrl = img.thumbnail || img.content
+    const proxiedUrl = jira.resolveUrl(originalUrl)
+
+    if (!imageThumbnails.value[originalUrl]) {
+      try {
+        const res = await fetch(proxiedUrl, { headers: jira.getAuthHeaders() })
+        const blob = await res.blob()
+        imageThumbnails.value[originalUrl] = URL.createObjectURL(blob)
+      }
+      catch (e) {
+        console.error('Failed to load thumbnail:', e)
+      }
+    }
+  }
+})
+
 // 统一错误处理
 const errorMessage = computed(() => {
   if (!fetchError.value)
@@ -95,10 +168,19 @@ const statusColors: Record<string, string> = {
 function getStatusClass(status: string) {
   return statusColors[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/50'
 }
+
+// 描述文本清洗：移除 Jira 的 !image.png|width=...! 标记，因为我们已经在下方展示了图片
+const cleanedDescription = computed(() => {
+  const desc = selectedIssue.value?.fields.description
+  if (!desc)
+    return ''
+  // 匹配 !filename.ext|attr! 或 !filename.ext!
+  return desc.replace(/!.*?!/g, '').trim()
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0a0a0a] text-gray-200 p-6 md:p-12 font-sans">
+  <div class="min-h-screen bg-[#0a0a0a] text-gray-200 p-6 md:p-12 font-sans selection:bg-teal-500/30">
     <div class="max-w-5xl mx-auto">
       <!-- Header -->
       <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
@@ -291,21 +373,77 @@ function getStatusClass(status: string) {
           </div>
 
           <!-- Modal Body -->
-          <div v-if="selectedIssue" class="flex-1 overflow-y-auto p-6 md:p-10">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div v-if="selectedIssue" class="flex-1 overflow-y-auto p-6 md:p-10 text-left">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
               <!-- Left Column: Content -->
-              <div class="lg:col-span-2 space-y-8">
+              <div class="lg:col-span-2 space-y-10">
                 <section>
-                  <h2 class="text-3xl font-bold text-white mb-4 leading-tight">
+                  <h2 class="text-3xl font-extrabold text-white mb-6 leading-tight tracking-tight">
                     {{ selectedIssue.fields.summary }}
                   </h2>
                   <div class="prose prose-invert max-w-none">
-                    <p v-if="selectedIssue.fields.description" class="text-gray-400 whitespace-pre-wrap leading-relaxed">
-                      {{ selectedIssue.fields.description }}
+                    <p v-if="cleanedDescription" class="text-gray-400 whitespace-pre-wrap leading-relaxed text-base">
+                      {{ cleanedDescription }}
                     </p>
                     <p v-else class="text-gray-600 italic">
                       No description provided.
                     </p>
+                  </div>
+                </section>
+
+                <!-- Attachments Section -->
+                <section v-if="images.length || otherFiles.length" class="space-y-6 pt-6 border-t border-gray-800">
+                  <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 flex items-center gap-2">
+                    <div class="i-tabler-paperclip" />
+                    Attachments ({{ selectedIssue.fields.attachment?.length }})
+                  </h4>
+
+                  <!-- Image Gallery -->
+                  <div v-if="images.length" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div
+                      v-for="img in images"
+                      :key="img.id"
+                      class="group relative aspect-video bg-gray-800 rounded-xl overflow-hidden border border-gray-700/50 cursor-zoom-in"
+                      @click="openPreview(img.content)"
+                    >
+                      <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="i-tabler-photo text-3xl text-gray-700" />
+                      </div>
+                      <!-- 实际图片预览 -->
+                      <img
+                        v-if="imageThumbnails[img.thumbnail || img.content]"
+                        :src="imageThumbnails[img.thumbnail || img.content]"
+                        class="absolute inset-0 w-full h-full object-cover"
+                      >
+                      <div class="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
+                      <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p class="text-[10px] text-white truncate">
+                          {{ img.filename }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Other Files -->
+                  <div v-if="otherFiles.length" class="space-y-2">
+                    <a
+                      v-for="file in otherFiles"
+                      :key="file.id"
+                      :href="jira.resolveUrl(file.content)"
+                      target="_blank"
+                      class="flex items-center gap-3 p-3 bg-gray-800/30 border border-gray-800 rounded-xl hover:bg-gray-800/50 hover:border-gray-700 transition-all group"
+                    >
+                      <div class="i-tabler-file text-gray-500 group-hover:text-teal-400" />
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm text-gray-300 truncate">
+                          {{ file.filename }}
+                        </p>
+                        <p class="text-[10px] text-gray-600">
+                          {{ (file.size / 1024).toFixed(1) }} KB
+                        </p>
+                      </div>
+                      <div class="i-tabler-download text-gray-600 opacity-0 group-hover:opacity-100" />
+                    </a>
                   </div>
                 </section>
 
@@ -329,32 +467,32 @@ function getStatusClass(status: string) {
               </div>
 
               <!-- Right Column: Meta Info -->
-              <div class="space-y-6">
-                <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/30 space-y-6">
+              <div class="space-y-8">
+                <div class="bg-gray-800/40 p-6 rounded-2xl border border-gray-800/50 space-y-6">
                   <div>
-                    <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-3">
                       Status
                     </p>
-                    <span class="px-3 py-1 rounded-full border text-sm inline-block" :class="getStatusClass(selectedIssue.fields.status.name)">
+                    <span class="px-3 py-1 rounded-full border text-xs font-medium inline-block" :class="getStatusClass(selectedIssue.fields.status.name)">
                       {{ selectedIssue.fields.status.name }}
                     </span>
                   </div>
 
                   <div>
-                    <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-3">
                       Priority
                     </p>
-                    <div class="flex items-center gap-2 text-gray-300">
+                    <div class="flex items-center gap-2 text-gray-300 text-sm font-medium">
                       <div class="i-tabler-alert-triangle text-yellow-500" />
                       {{ selectedIssue.fields.priority.name }}
                     </div>
                   </div>
 
                   <div>
-                    <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-3">
                       Assignee
                     </p>
-                    <div class="flex items-center gap-3 text-gray-300">
+                    <div class="flex items-center gap-3 text-gray-300 text-sm font-medium">
                       <div class="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-500 font-bold text-xs">
                         {{ selectedIssue.fields.assignee?.displayName.charAt(0) || 'U' }}
                       </div>
@@ -362,24 +500,24 @@ function getStatusClass(status: string) {
                     </div>
                   </div>
 
-                  <div class="pt-6 border-t border-gray-800 space-y-4 text-xs text-gray-500">
-                    <div class="flex justify-between">
-                      <span>Created</span>
-                      <span class="text-gray-400">{{ new Date(selectedIssue.fields.created).toLocaleString() }}</span>
+                  <div class="pt-6 border-t border-gray-800/50 space-y-4 text-[11px] text-gray-500">
+                    <div class="flex justify-between items-center">
+                      <span class="opacity-60">Created</span>
+                      <span class="text-gray-400 font-mono">{{ new Date(selectedIssue.fields.created).toLocaleString() }}</span>
                     </div>
-                    <div class="flex justify-between">
-                      <span>Updated</span>
-                      <span class="text-gray-400">{{ new Date(selectedIssue.fields.updated).toLocaleString() }}</span>
+                    <div class="flex justify-between items-center">
+                      <span class="opacity-60">Updated</span>
+                      <span class="text-gray-400 font-mono">{{ new Date(selectedIssue.fields.updated).toLocaleString() }}</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Modal Actions -->
-                <div class="space-y-2">
-                  <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold px-2">
+                <div class="space-y-4 px-2">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">
                     Quick Transitions
                   </p>
-                  <div class="grid grid-cols-1 gap-2">
+                  <div class="grid grid-cols-1 gap-2.5">
                     <button
                       v-if="selectedIssue.fields.status.name !== 'In Progress'"
                       class="px-4 py-2.5 text-sm rounded-xl bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-3"
@@ -407,6 +545,25 @@ function getStatusClass(status: string) {
             </div>
           </div>
         </div>
+      </div>
+    </Transition>
+
+    <!-- Image Preview Lightbox -->
+    <Transition name="fade">
+      <div v-if="previewImageUrl" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl" @click="closePreview">
+        <div class="absolute top-6 right-6 flex items-center gap-4">
+          <button class="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white" @click.stop="closePreview">
+            <div class="i-tabler-x text-2xl" />
+          </button>
+        </div>
+
+        <div v-if="previewImageUrl === 'loading'" class="flex flex-col items-center gap-4">
+          <div class="i-tabler-loader-2 text-5xl text-teal-500 animate-spin" />
+          <p class="text-teal-500 font-bold animate-pulse">
+            Loading High-Res Image...
+          </p>
+        </div>
+        <img v-else :src="previewImageUrl" class="max-w-[95vw] max-h-[95vh] object-contain shadow-2xl rounded-lg" @click.stop>
       </div>
     </Transition>
   </div>
