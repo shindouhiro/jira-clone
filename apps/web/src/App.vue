@@ -190,14 +190,18 @@ const statusColors: Record<string, string> = {
   'In Progress': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
   'Done': 'bg-green-500/20 text-green-400 border-green-500/50',
   'Resolved': 'bg-green-500/20 text-green-400 border-green-500/50',
+  'Fixed': 'bg-green-500/20 text-green-400 border-green-500/50',
   'Open': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50',
+  'Reopened': 'bg-red-500/20 text-red-400 border-red-500/50',
   // Chinese
   '待办': 'bg-blue-500/20 text-blue-400 border-blue-500/50',
   '处理中': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
   '进行中': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
   '已完成': 'bg-green-500/20 text-green-400 border-green-500/50',
   '已解决': 'bg-green-500/20 text-green-400 border-green-500/50',
+  '已修复': 'bg-green-500/20 text-green-400 border-green-500/50',
   '开放': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50',
+  '再次打开': 'bg-red-500/20 text-red-400 border-red-500/50',
 }
 
 function getStatusClass(status: string) {
@@ -374,13 +378,13 @@ const cleanedDescription = computed(() => {
                 </p>
                 <div class="flex flex-wrap md:flex-col gap-2">
                   <button
-                    v-if="['To Do', 'Open', '待办', '开放'].includes(issue.fields.status.name)"
+                    v-if="['To Do', 'Open', '待办', '开放', '再次打开', 'Reopened'].includes(issue.fields.status.name)"
                     class="px-3 py-1.5 text-xs rounded-lg bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-2 disabled:opacity-50"
                     :disabled="updatingKeys.has(issue.key)"
-                    @click="handleTransition(issue.key, '11')"
+                    @click="handleTransition(issue.key, (issue.fields.status.name === '再次打开' || issue.fields.status.name === 'Reopened') ? '51' : '11')"
                   >
                     <div v-if="updatingKeys.has(issue.key)" class="i-tabler-loader-2 animate-spin" />
-                    <div v-else class="i-tabler-player-play" /> {{ t('actions.start_progress') }}
+                    <div v-else class="i-tabler-player-play" /> {{ (issue.fields.status.name === '再次打开' || issue.fields.status.name === 'Reopened') ? t('actions.fix') : t('actions.start_progress') }}
                   </button>
                   <button
                     v-if="['In Progress', '处理中', '进行中'].includes(issue.fields.status.name)"

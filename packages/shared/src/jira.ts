@@ -167,16 +167,18 @@ export class JiraClient {
     const url = `${this.baseUrl}/rest/api/2/issue/${issueKey}/transitions`
     return useFetch(url, {
       immediate: false,
+      method: 'POST',
+      body: JSON.stringify({
+        transition: { id: String(transitionId) },
+      }),
       headers: {
         'Authorization': `Basic ${this.auth}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Atlassian-Token': 'no-check',
-        'X-Requested-With': 'XMLHttpRequest',
+        'content-type': 'application/json',
+        'accept': 'application/json',
+        'x-atlassian-token': 'no-check',
+        'x-requested-with': 'XMLHttpRequest',
       },
-    }).post(JSON.stringify({
-      transition: { id: String(transitionId) },
-    })).json()
+    }).json()
   }
 
   /**
