@@ -1,0 +1,31 @@
+node_modules
+*.log
+dist
+dist-*
+.vscode
+.idea
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vite / Volar generated files
+src/**/*.vue.js
+src/**/*.vue.js.map
+src/**/*.js
+src/**/*.js.map
+!src/main.ts
+
+# Shared package build files
+packages/*/dist
+packages/*/types
+
+# OS
+.DS_Store
+Thumbs.db

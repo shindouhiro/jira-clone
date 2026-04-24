@@ -1,0 +1,30 @@
+{
+  "name": "jira",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "pnpm -r --filter \"@jira/web\" dev",
+    "build": "pnpm -r build",
+    "lint": "eslint . --fix",
+    "typecheck": "pnpm -r typecheck",
+    "postinstall": "npx simple-git-hooks"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:dev",
+    "@iconify-json/logos": "^1.2.11",
+    "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/tabler": "^1.2.33",
+    "eslint": "catalog:dev",
+    "eslint-plugin-format": "^2.0.1",
+    "lint-staged": "^15.4.1",
+    "simple-git-hooks": "^2.11.1",
+    "typescript": "catalog:dev"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint-staged"
+  },
+  "lint-staged": {
+    "*": "eslint --fix"
+  }
+}

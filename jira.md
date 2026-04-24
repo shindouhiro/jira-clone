@@ -1,0 +1,2 @@
+- 本地搭建的jira地址http://jira.cloudtogo.local/
+- 我需要通过账户 wuweidong Wu83609045@ 获取bug列表

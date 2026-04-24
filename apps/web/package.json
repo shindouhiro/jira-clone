@@ -1,0 +1,31 @@
+{
+  "name": "@jira/web",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --fix"
+  },
+  "dependencies": {
+    "@jira/shared": "workspace:*",
+    "@vueuse/core": "catalog:prod",
+    "axios": "catalog:prod",
+    "pinia": "catalog:prod",
+    "vue": "catalog:prod",
+    "vue-router": "catalog:prod"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:dev",
+    "@iconify-json/logos": "^1.2.0",
+    "@iconify-json/tabler": "^1.2.0",
+    "@vitejs/plugin-vue": "catalog:dev",
+    "eslint": "catalog:dev",
+    "typescript": "catalog:dev",
+    "unocss": "catalog:dev",
+    "vite": "catalog:dev",
+    "vue-tsc": "catalog:dev"
+  }
+}

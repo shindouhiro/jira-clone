@@ -1,0 +1,20 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+catalogs:
+  prod:
+    vue: ^3.5.13
+    vue-router: ^4.5.0
+    pinia: ^2.3.0
+    '@vueuse/core': ^12.4.0
+    axios: ^1.7.9
+  dev:
+    eslint: ^9.19.0
+    '@antfu/eslint-config': ^3.16.0
+    typescript: ^5.7.3
+    vite: ^6.0.7
+    '@vitejs/plugin-vue': ^5.2.1
+    vue-tsc: ^2.2.0
+    vitest: ^3.0.2
+    unocss: ^66.0.0

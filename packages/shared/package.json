@@ -1,0 +1,17 @@
+{
+  "name": "@jira/shared",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@vueuse/core": "catalog:prod"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:dev",
+    "eslint": "catalog:dev",
+    "typescript": "catalog:dev"
+  }
+}
