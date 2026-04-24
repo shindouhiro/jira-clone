@@ -20,7 +20,19 @@ export default defineConfig({
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, _req, _res) => {
             proxyReq.setHeader('X-Atlassian-Token', 'no-check')
+            proxyReq.removeHeader('Origin')
+            proxyReq.removeHeader('Referer')
+            proxyReq.removeHeader('Cookie')
           })
+        },
+        bypass: (req) => {
+          if (req.headers) {
+            delete req.headers.origin
+            delete req.headers.referer
+            delete req.headers.cookie
+            // 极其关键：覆盖 User-Agent。如果 Jira 检测到这是浏览器发出的请求且没有 Origin/Referer，会直接判定为 CSRF 攻击并返回 403。
+            req.headers['user-agent'] = 'JiraClient/1.0'
+          }
         },
       },
     },

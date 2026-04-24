@@ -24,6 +24,7 @@
     "reopen": "重新打开",
     "close": "关闭",
     "start_testing": "开始测试",
+    "resolve_directly": "直接解决 (已解决)",
     "fix": "修复"
   },
   "detail": {

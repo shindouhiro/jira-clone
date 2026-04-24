@@ -24,6 +24,7 @@
     "reopen": "Reopen",
     "close": "Close",
     "start_testing": "Start Testing",
+    "resolve_directly": "Resolve Directly",
     "fix": "Fix"
   },
   "detail": {

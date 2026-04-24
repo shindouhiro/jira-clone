@@ -1,4 +1,5 @@
 import { useFetch } from '@vueuse/core'
+import { ref } from 'vue'
 
 export interface JiraIssue {
   key: string
@@ -165,20 +166,48 @@ export class JiraClient {
    */
   doTransition(issueKey: string, transitionId: string) {
     const url = `${this.baseUrl}/rest/api/2/issue/${issueKey}/transitions`
-    return useFetch(url, {
-      immediate: false,
-      method: 'POST',
-      body: JSON.stringify({
-        transition: { id: String(transitionId) },
-      }),
-      headers: {
-        'Authorization': `Basic ${this.auth}`,
-        'content-type': 'application/json',
-        'accept': 'application/json',
-        'x-atlassian-token': 'no-check',
-        'x-requested-with': 'XMLHttpRequest',
-      },
-    }).json()
+    const error = ref<any>(null)
+    const data = ref<any>(null)
+
+    const execute = async () => {
+      error.value = null
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${this.auth}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Atlassian-Token': 'no-check',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({
+            transition: { id: String(transitionId) },
+          }),
+        })
+
+        if (!res.ok) {
+          const text = await res.text()
+          try {
+            data.value = JSON.parse(text)
+          }
+          catch {
+            data.value = text
+          }
+          error.value = `HTTP ${res.status} ${res.statusText}`
+          return
+        }
+
+        if (res.status !== 204) {
+          data.value = await res.json()
+        }
+      }
+      catch (err: any) {
+        error.value = err.message || 'Network error'
+      }
+    }
+
+    return { error, execute, data }
   }
 
   /**

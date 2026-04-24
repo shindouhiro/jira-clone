@@ -152,22 +152,27 @@ const updatingKeys = ref<Set<string>>(new Set())
 
 const transitionError = ref<string | null>(null)
 
-async function handleTransition(issueKey: string, transitionId: string) {
+async function handleTransition(issueKey: string, transitionIds: string) {
   updatingKeys.value.add(issueKey)
   transitionError.value = null
   try {
-    const { error, execute, data } = jira.doTransition(issueKey, transitionId)
-    await execute()
-    if (error.value) {
-      // 尝试从响应数据中获取更详细的错误信息
-      const detail = data.value?.errorMessages?.[0] || data.value?.errors?.[Object.keys(data.value?.errors || {})[0]] || error.value
-      transitionError.value = `${t('common.error_fetch')}: ${detail}`
+    const ids = transitionIds.split(',')
+    for (const id of ids) {
+      const { error, execute, data } = jira.doTransition(issueKey, id.trim())
+      await execute()
+      if (error.value) {
+        // 尝试从响应数据中获取更详细的错误信息
+        const detail = data.value?.errorMessages?.[0] || data.value?.errors?.[Object.keys(data.value?.errors || {})[0]] || error.value
+        transitionError.value = `${t('common.error_fetch')}: ${detail}`
 
-      // 如果是 500 错误，打印更多上下文
-      console.error('Transition failed with Status:', error.value)
-      console.error('Response Data:', data.value)
+        // 如果是 500 错误，打印更多上下文
+        console.error('Transition failed with Status:', error.value)
+        console.error('Response Data:', data.value)
+        break // 遇到错误即停止后续流转
+      }
     }
-    else {
+
+    if (!transitionError.value) {
       await fetchBugs()
       // 如果当前弹窗打开的是这个 Issue，更新详情
       if (selectedIssueKey.value === issueKey) {
@@ -381,10 +386,10 @@ const cleanedDescription = computed(() => {
                     v-if="['To Do', 'Open', '待办', '开放', '再次打开', 'Reopened'].includes(issue.fields.status.name)"
                     class="px-3 py-1.5 text-xs rounded-lg bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all flex items-center gap-2 disabled:opacity-50"
                     :disabled="updatingKeys.has(issue.key)"
-                    @click="handleTransition(issue.key, (issue.fields.status.name === '再次打开' || issue.fields.status.name === 'Reopened') ? '51' : '11')"
+                    @click="handleTransition(issue.key, (issue.fields.status.name === '再次打开' || issue.fields.status.name === 'Reopened') ? '51,21' : '11,21')"
                   >
                     <div v-if="updatingKeys.has(issue.key)" class="i-tabler-loader-2 animate-spin" />
-                    <div v-else class="i-tabler-player-play" /> {{ (issue.fields.status.name === '再次打开' || issue.fields.status.name === 'Reopened') ? t('actions.fix') : t('actions.start_progress') }}
+                    <div v-else class="i-tabler-player-play" /> {{ t('actions.resolve_directly') }}
                   </button>
                   <button
                     v-if="['In Progress', '处理中', '进行中'].includes(issue.fields.status.name)"
