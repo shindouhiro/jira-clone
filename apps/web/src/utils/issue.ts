@@ -106,5 +106,5 @@ export function getPriorityColorClass(priorityName?: string) {
 export function formatDisplayName(displayName?: string) {
   if (!displayName)
     return ''
-  return displayName === '吴伟东' ? 'Shindou' : displayName
+  return (displayName === '吴伟东' || displayName === 'wuweidong') ? 'Shindou' : displayName
 }
