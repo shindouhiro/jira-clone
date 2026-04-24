@@ -10,8 +10,8 @@ import { useIssueAttachments } from '@/composables/useIssueAttachments'
 import { useJiraDashboard } from '@/composables/useJiraDashboard'
 import { cleanJiraDescription, getStatusClass, resolveQuickActions } from '@/utils/issue'
 
-const username = 'wuweidong'
-const password = 'Wu83609045@'
+const username = import.meta.env.VITE_JIRA_USERNAME || ''
+const password = import.meta.env.VITE_JIRA_PASSWORD || ''
 
 const { t, locale } = useI18n()
 
