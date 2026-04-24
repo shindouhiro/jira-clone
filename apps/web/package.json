@@ -26,6 +26,8 @@
     "typescript": "catalog:dev",
     "unocss": "catalog:dev",
     "vite": "catalog:dev",
+    "unplugin-auto-import": "catalog:dev",
+    "unplugin-vue-components": "catalog:dev",
     "vue-tsc": "catalog:dev"
   }
 }

@@ -23,6 +23,8 @@ catalogs:
     typescript: ^6.0.3
     unocss: ^66.0.0
     vite: ^6.0.7
+    unplugin-auto-import: ^19.0.0
+    unplugin-vue-components: ^28.0.0
     vue-tsc: ^2.2.0
   prod:
     '@vueuse/core': ^12.4.0
