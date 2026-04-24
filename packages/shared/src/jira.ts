@@ -46,6 +46,11 @@ export interface JiraSearchResponse {
   total: number
 }
 
+export interface JiraTransition {
+  id: string
+  name: string
+}
+
 export class JiraClient {
   private auth: string
 
@@ -123,9 +128,7 @@ export class JiraClient {
   getIssueDetail(issueKey: () => string | null) {
     const url = () => {
       const key = issueKey()
-      if (!key)
-        return null
-      return `${this.baseUrl}/rest/api/2/issue/${key}`
+      return `${this.baseUrl}/rest/api/2/issue/${key || ''}`
     }
 
     return useFetch(url, {
@@ -136,6 +139,11 @@ export class JiraClient {
     }, {
       refetch: true,
       immediate: false, // 只有在有 issueKey 时才执行
+      beforeFetch({ cancel, options }) {
+        if (!issueKey())
+          cancel()
+        return { options }
+      },
     }).get().json<JiraIssue>()
   }
 
@@ -145,9 +153,7 @@ export class JiraClient {
   getTransitions(issueKey: () => string | null) {
     const url = () => {
       const key = issueKey()
-      if (!key)
-        return null
-      return `${this.baseUrl}/rest/api/2/issue/${key}/transitions`
+      return `${this.baseUrl}/rest/api/2/issue/${key || ''}/transitions`
     }
 
     return useFetch(url, {
@@ -158,7 +164,12 @@ export class JiraClient {
     }, {
       refetch: true,
       immediate: false,
-    }).get().json<{ transitions: any[] }>()
+      beforeFetch({ cancel, options }) {
+        if (!issueKey())
+          cancel()
+        return { options }
+      },
+    }).get().json<{ transitions: JiraTransition[] }>()
   }
 
   /**
