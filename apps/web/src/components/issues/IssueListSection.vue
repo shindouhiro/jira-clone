@@ -35,9 +35,14 @@ function forwardTransition(issueKey: string, transitionIds: string) {
       </p>
     </div>
 
-    <div v-else-if="issues.length > 0" id="issue-list-content" class="grid gap-4">
-      <TransitionGroup name="list" tag="div">
-        <IssueCard
+    <TransitionGroup
+      v-else-if="issues.length > 0"
+      id="issue-list-content"
+      name="list"
+      tag="div"
+      class="grid gap-4"
+    >
+      <IssueCard
           v-for="issue in issues"
           :key="issue.key"
           :issue="issue"
@@ -48,7 +53,6 @@ function forwardTransition(issueKey: string, transitionIds: string) {
           @transition="forwardTransition"
         />
       </TransitionGroup>
-    </div>
 
     <div
       v-else

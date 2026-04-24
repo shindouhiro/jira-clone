@@ -57,7 +57,7 @@ export function resolveQuickActions(statusName: string, t: (key: string) => stri
       label: t('actions.resolve_directly'),
       transitionIds,
       iconClass: 'i-tabler-player-play',
-      className: 'bg-white dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border-yellow-200 dark:border-yellow-500/20 hover:bg-yellow-50 dark:hover:bg-yellow-500 hover:text-yellow-700 dark:hover:text-black',
+      className: 'bg-yellow-50/50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border-yellow-200/60 dark:border-yellow-500/20 hover:bg-yellow-100 dark:hover:bg-yellow-500/20 hover:text-yellow-700 dark:hover:text-yellow-400',
     }]
   }
 
@@ -67,7 +67,7 @@ export function resolveQuickActions(statusName: string, t: (key: string) => stri
       label: t('actions.resolve'),
       transitionIds: '21',
       iconClass: 'i-tabler-check',
-      className: 'bg-white dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20 hover:bg-green-50 dark:hover:bg-green-500 hover:text-green-700 dark:hover:text-black',
+      className: 'bg-green-50/50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200/60 dark:border-green-500/20 hover:bg-green-100 dark:hover:bg-green-500/20 hover:text-green-700 dark:hover:text-green-300',
     }]
   }
 
@@ -77,7 +77,7 @@ export function resolveQuickActions(statusName: string, t: (key: string) => stri
       label: t('actions.start_testing'),
       transitionIds: '31',
       iconClass: 'i-tabler-test-pipe',
-      className: 'bg-white dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-500/20 hover:bg-teal-50 dark:hover:bg-teal-500 hover:text-teal-700 dark:hover:text-black',
+      className: 'bg-teal-50/50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-200/60 dark:border-teal-500/20 hover:bg-teal-100 dark:hover:bg-teal-500/20 hover:text-teal-700 dark:hover:text-teal-300',
     }]
   }
 
