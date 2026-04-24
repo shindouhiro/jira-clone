@@ -15,13 +15,13 @@
     "axios": "catalog:prod",
     "pinia": "catalog:prod",
     "vue": "catalog:prod",
-    "vue-i18n": "^11.3.2",
+    "vue-i18n": "catalog:",
     "vue-router": "catalog:prod"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",
-    "@iconify-json/logos": "^1.2.0",
-    "@iconify-json/tabler": "^1.2.0",
+    "@iconify-json/logos": "catalog:dev",
+    "@iconify-json/tabler": "catalog:dev",
     "@vitejs/plugin-vue": "catalog:dev",
     "eslint": "catalog:dev",
     "typescript": "catalog:dev",

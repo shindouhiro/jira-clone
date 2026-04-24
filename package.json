@@ -12,13 +12,14 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",
-    "@iconify-json/logos": "^1.2.11",
-    "@iconify-json/mdi": "^1.2.3",
-    "@iconify-json/tabler": "^1.2.33",
+    "@iconify-json/logos": "catalog:dev",
+    "@iconify-json/mdi": "catalog:dev",
+    "@iconify-json/tabler": "catalog:dev",
     "eslint": "catalog:dev",
-    "eslint-plugin-format": "^2.0.1",
-    "lint-staged": "^15.4.1",
-    "simple-git-hooks": "^2.11.1",
+    "eslint-plugin-format": "catalog:",
+    "eslint-plugin-pnpm": "catalog:",
+    "lint-staged": "catalog:",
+    "simple-git-hooks": "catalog:",
     "typescript": "catalog:dev"
   },
   "simple-git-hooks": {

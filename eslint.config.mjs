@@ -6,6 +6,8 @@ export default antfu(
     unocss: false,
     vue: true,
     typescript: true,
+    yaml: true,
+    pnpm: true,
   },
   {
     rules: {
