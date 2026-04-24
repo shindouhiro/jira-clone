@@ -1,45 +1,28 @@
 <script setup lang="ts">
 import type { DashboardProject } from '@/composables/useJiraDashboard'
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { formatDisplayName } from '@/utils/issue'
+
+defineProps<Props>()
+const emit = defineEmits<{
+  (event: 'toggleTheme'): void
+  (event: 'toggleLanguage'): void
+  (event: 'refresh'): void
+  (event: 'clearTransitionError'): void
+}>()
+const projectFilter = defineModel<string>('projectFilter', { required: true })
+const unresolvedOnly = defineModel<boolean>('unresolvedOnly', { required: true })
+const activeTab = defineModel<'all' | 'todo'>('activeTab', { required: true })
 
 interface Props {
   username: string
   locale: string
   isDark: boolean
   transitionError: string | null
-  projectFilter: string
-  unresolvedOnly: boolean
   myProjects: DashboardProject[]
   isInitialLoading: boolean
   isRefreshing: boolean
-  activeTab: 'all' | 'todo'
 }
 
-defineProps<Props>()
-
-const emit = defineEmits<{
-  (event: 'toggleTheme'): void
-  (event: 'toggleLanguage'): void
-  (event: 'update:projectFilter', value: string): void
-  (event: 'update:unresolvedOnly', value: boolean): void
-  (event: 'update:activeTab', value: 'all' | 'todo'): void
-  (event: 'refresh'): void
-  (event: 'clearTransitionError'): void
-}>()
-
 const { t } = useI18n()
-
-const projectFilterModel = computed({
-  get: () => props.projectFilter,
-  set: (value: string) => emit('update:projectFilter', value),
-})
-
-const unresolvedOnlyModel = computed({
-  get: () => props.unresolvedOnly,
-  set: (value: boolean) => emit('update:unresolvedOnly', value),
-})
 </script>
 
 <template>
@@ -63,7 +46,7 @@ const unresolvedOnlyModel = computed({
             ? 'bg-teal-500/10 dark:bg-teal-400/10 text-teal-600 dark:text-teal-400 ring-1 ring-teal-500/20 dark:ring-teal-400/20 shadow-sm'
             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'"
           type="button"
-          @click="emit('update:activeTab', 'all')"
+          @click="activeTab = 'all'"
         >
           <div class="i-tabler-list-details" />
           {{ t('common.all_bugs') || 'All Bugs' }}
@@ -74,7 +57,7 @@ const unresolvedOnlyModel = computed({
             ? 'bg-teal-500/10 dark:bg-teal-400/10 text-teal-600 dark:text-teal-400 ring-1 ring-teal-500/20 dark:ring-teal-400/20 shadow-sm'
             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'"
           type="button"
-          @click="emit('update:activeTab', 'todo')"
+          @click="activeTab = 'todo'"
         >
           <div class="i-tabler-checkbox" />
           {{ t('common.todo_list') || 'Todo List' }}
@@ -148,7 +131,7 @@ const unresolvedOnlyModel = computed({
         <div class="relative min-w-48">
           <select
             id="dashboard-project-filter"
-            v-model="projectFilterModel"
+            v-model="projectFilter"
             class="h-8 w-full cursor-pointer appearance-none border border-gray-200 rounded-lg bg-gray-50 py-1 pl-3 pr-8 text-sm text-gray-900 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white disabled:opacity-50 focus:ring-2 focus:ring-teal-500"
             :disabled="isInitialLoading"
           >
@@ -177,20 +160,20 @@ const unresolvedOnlyModel = computed({
       >
         <div
           class="relative h-5 w-9 rounded-full shadow-inner transition-colors duration-200"
-          :class="unresolvedOnlyModel ? 'bg-teal-500 dark:bg-teal-600' : 'bg-gray-200 dark:bg-gray-700'"
+          :class="unresolvedOnly ? 'bg-teal-500 dark:bg-teal-600' : 'bg-gray-200 dark:bg-gray-700'"
         >
           <input
             id="dashboard-unresolved-checkbox"
-            v-model="unresolvedOnlyModel"
+            v-model="unresolvedOnly"
             type="checkbox"
             class="hidden"
           >
           <div
             class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm ring-1 ring-black/5 transition-transform duration-200 ease-in-out"
-            :class="unresolvedOnlyModel ? 'translate-x-4' : 'translate-x-0'"
+            :class="unresolvedOnly ? 'translate-x-4' : 'translate-x-0'"
           />
         </div>
-        <span class="text-sm font-bold" :class="unresolvedOnlyModel ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'">
+        <span class="text-sm font-bold" :class="unresolvedOnly ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'">
           {{ t('common.unresolved_only') }}
         </span>
       </label>

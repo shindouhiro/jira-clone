@@ -1,15 +1,4 @@
 <script setup lang="ts">
-import { useDark, useToggle } from '@vueuse/core'
-import { ref, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import DashboardHeader from '@/components/issues/DashboardHeader.vue'
-import IssueDetailModal from '@/components/issues/IssueDetailModal.vue'
-import IssueListSection from '@/components/issues/IssueListSection.vue'
-import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
-import { useIssueAttachments } from '@/composables/useIssueAttachments'
-import { useJiraDashboard } from '@/composables/useJiraDashboard'
-import { cleanJiraDescription, getStatusClass, resolveQuickActions } from '@/utils/issue'
-
 const username = import.meta.env.VITE_JIRA_USERNAME || ''
 const password = import.meta.env.VITE_JIRA_PASSWORD || ''
 
@@ -113,53 +102,42 @@ function resolveAttachmentUrl(url: string) {
   return jira.resolveUrl(url)
 }
 
-function updateProjectFilter(value: string) {
-  projectFilter.value = value
-}
-
-function updateUnresolvedOnly(value: boolean) {
-  unresolvedOnly.value = value
-}
-
 function refreshIssues() {
   void fetchBugs()
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-gray-800 dark:text-gray-200 p-6 md:p-12 font-sans selection:bg-teal-500/30 transition-colors duration-300">
-    <div class="max-w-5xl mx-auto">
+  <div class="min-h-screen bg-slate-50 p-6 text-gray-800 font-sans transition-colors duration-300 dark:bg-[#0a0a0a] selection:bg-teal-500/30 md:p-12 dark:text-gray-200">
+    <div class="mx-auto max-w-5xl">
       <DashboardHeader
+        v-model:project-filter="projectFilter"
+        v-model:unresolved-only="unresolvedOnly"
+        v-model:active-tab="activeTab"
         :username="username"
         :locale="locale"
         :is-dark="isDark"
         :transition-error="transitionError"
-        :project-filter="projectFilter"
-        :unresolved-only="unresolvedOnly"
         :my-projects="myProjects"
         :is-initial-loading="isInitialLoading"
         :is-refreshing="isFetching"
-        :active-tab="activeTab"
         @toggle-theme="toggleDark()"
         @toggle-language="toggleLanguage"
-        @update:project-filter="updateProjectFilter"
-        @update:unresolved-only="updateUnresolvedOnly"
-        @update:active-tab="activeTab = $event"
         @refresh="refreshIssues"
         @clear-transition-error="clearTransitionError"
       />
 
       <Transition name="fade">
-        <div
+        <article
           v-if="errorMessage"
           id="issue-fetch-error"
-          class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-center gap-3"
+          class="mb-6 flex items-center gap-3 border border-red-500/20 rounded-xl bg-red-500/10 p-4 text-red-400"
           role="status"
           aria-live="assertive"
         >
           <div class="i-tabler-alert-circle text-xl" />
           {{ errorMessage }}
-        </div>
+        </article>
       </Transition>
 
       <main id="jira-dashboard-main" aria-label="Jira bug dashboard">
@@ -223,7 +201,9 @@ function refreshIssues() {
 
 .list-enter-active,
 .list-leave-active {
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
 }
 
 .list-enter-from,

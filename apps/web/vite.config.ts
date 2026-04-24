@@ -1,10 +1,37 @@
 import { fileURLToPath, URL } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 import UnoCSS from 'unocss/vite'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [vue(), UnoCSS()],
+  plugins: [
+    vue(),
+    UnoCSS(),
+    AutoImport({
+      imports: [
+        'vue',
+        'vue-router',
+        'vue-i18n',
+        'pinia',
+        '@vueuse/core',
+      ],
+      dts: 'src/auto-imports.d.ts',
+      dirs: [
+        'src/composables/**',
+        'src/utils/**',
+      ],
+      vueTemplate: true,
+      eslintrc: {
+        enabled: true,
+      },
+    }),
+    Components({
+      dirs: ['src/components'],
+      dts: 'src/components.d.ts',
+    }),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
