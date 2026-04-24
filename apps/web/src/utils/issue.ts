@@ -102,3 +102,9 @@ export function getPriorityColorClass(priorityName?: string) {
     return 'text-teal-500 dark:text-teal-400'
   return 'text-gray-500 dark:text-gray-400'
 }
+
+export function formatDisplayName(displayName?: string) {
+  if (!displayName)
+    return ''
+  return displayName === '吴伟东' ? 'Shindou' : displayName
+}

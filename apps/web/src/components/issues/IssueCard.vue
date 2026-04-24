@@ -2,7 +2,7 @@
 import type { JiraIssue } from '@jira/shared'
 import type { QuickTransitionAction } from '@/utils/issue'
 import { useI18n } from 'vue-i18n'
-import { formatIssueDate, getPriorityColorClass } from '@/utils/issue'
+import { formatDisplayName, formatIssueDate, getPriorityColorClass } from '@/utils/issue'
 
 interface Props {
   issue: JiraIssue
@@ -63,7 +63,7 @@ function runTransition(transitionIds: string) {
         <ul class="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium">
           <li class="flex items-center gap-1.5">
             <span class="i-tabler-user text-gray-500 dark:text-gray-400" />
-            <span>{{ issue.fields.assignee?.displayName || t('detail.unassigned') }}</span>
+            <span>{{ issue.fields.assignee?.displayName ? formatDisplayName(issue.fields.assignee.displayName) : t('detail.unassigned') }}</span>
           </li>
           <li class="flex items-center gap-1.5">
             <span class="i-tabler-alert-triangle" :class="getPriorityColorClass(issue.fields.priority.name)" />

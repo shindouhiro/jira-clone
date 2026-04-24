@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DashboardProject } from '@/composables/useJiraDashboard'
+import { formatDisplayName } from '@/utils/issue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -51,7 +52,7 @@ const unresolvedOnlyModel = computed({
         </h1>
         <p class="text-gray-500 dark:text-gray-400 mt-2 font-medium flex items-center gap-2">
           Managing tasks for
-          <code class="bg-white dark:bg-gray-800 px-2 py-0.5 rounded-md text-teal-600 dark:text-teal-400 font-bold border border-gray-200 dark:border-gray-700 shadow-sm">{{ username }}</code>
+          <code class="bg-white dark:bg-gray-800 px-2 py-0.5 rounded-md text-teal-600 dark:text-teal-400 font-bold border border-gray-200 dark:border-gray-700 shadow-sm">{{ formatDisplayName(username) }}</code>
         </p>
       </div>
 

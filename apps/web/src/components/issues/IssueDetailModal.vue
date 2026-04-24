@@ -5,7 +5,7 @@ import type { JiraAttachment } from '@/utils/issue'
 import { ref, computed, watch } from 'vue'
 import { useClipboard, onClickOutside, useDebounceFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import { formatIssueDateTime, getPriorityColorClass } from '@/utils/issue'
+import { formatDisplayName, formatIssueDateTime, getPriorityColorClass } from '@/utils/issue'
 
 interface Props {
   issueKey: string | null
@@ -234,7 +234,7 @@ function handleAssignUser(username: string | null) {
                     class="bg-gray-50 dark:bg-gray-800/30 p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm dark:shadow-none"
                   >
                     <header class="flex justify-between items-center mb-2">
-                      <span class="font-bold text-teal-600 dark:text-teal-400 text-sm">{{ comment.author.displayName }}</span>
+                      <span class="font-bold text-teal-600 dark:text-teal-400 text-sm">{{ formatDisplayName(comment.author.displayName) }}</span>
                       <time class="text-[10px] text-gray-400 dark:text-gray-600 font-medium">{{ formatIssueDateTime(comment.created) }}</time>
                     </header>
                     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -281,7 +281,7 @@ function handleAssignUser(username: string | null) {
                         >
                         <span v-else>{{ issue.fields.assignee?.displayName.charAt(0) || 'U' }}</span>
                       </div>
-                      {{ issue.fields.assignee?.displayName || t('detail.unassigned') }}
+                      {{ issue.fields.assignee?.displayName ? formatDisplayName(issue.fields.assignee.displayName) : t('detail.unassigned') }}
                     </div>
 
                     <div class="relative" ref="dropdownRef">
@@ -349,7 +349,7 @@ function handleAssignUser(username: string | null) {
                                   <span v-else>{{ user.displayName.charAt(0) }}</span>
                                 </div>
                                 <span class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
-                                  {{ user.displayName }}
+                                  {{ formatDisplayName(user.displayName) }}
                                 </span>
                               </button>
                               <p v-if="assignableUsers.length === 0" class="text-center py-4 text-[10px] text-gray-400 font-medium">
