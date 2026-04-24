@@ -56,6 +56,9 @@ const {
   errorMessage,
   updatingKeys,
   transitionError,
+  activeTab,
+  toggleTodo,
+  todoKeys,
   handleTransition: originalHandleTransition,
   handleAssign: originalHandleAssign,
 } = dashboard
@@ -136,10 +139,12 @@ function refreshIssues() {
         :my-projects="myProjects"
         :is-initial-loading="isInitialLoading"
         :is-refreshing="isFetching"
+        :active-tab="activeTab"
         @toggle-theme="toggleDark()"
         @toggle-language="toggleLanguage"
         @update:project-filter="updateProjectFilter"
         @update:unresolved-only="updateUnresolvedOnly"
+        @update:active-tab="activeTab = $event"
         @refresh="refreshIssues"
         @clear-transition-error="clearTransitionError"
       />
@@ -162,10 +167,12 @@ function refreshIssues() {
           :issues="issues"
           :is-fetching="isFetching"
           :updating-keys="updatingKeys"
+          :todo-keys="todoKeys"
           :get-status-class="getStatusClass"
           :get-quick-actions="getQuickActions"
           @open-detail="openDetail"
           @transition="handleTransitionWithConfirm"
+          @toggle-todo="toggleTodo"
         />
       </main>
     </div>

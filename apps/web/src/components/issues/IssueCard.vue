@@ -7,6 +7,7 @@ import { formatIssueDate, getPriorityColorClass } from '@/utils/issue'
 interface Props {
   issue: JiraIssue
   isUpdating: boolean
+  isInTodo: boolean
   statusClass: string
   quickActions: QuickTransitionAction[]
 }
@@ -16,6 +17,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   (event: 'openDetail', issueKey: string): void
   (event: 'transition', issueKey: string, transitionIds: string): void
+  (event: 'toggleTodo', issueKey: string): void
 }>()
 
 const { t } = useI18n()
@@ -92,6 +94,19 @@ function runTransition(transitionIds: string) {
             <div v-if="isUpdating" class="i-tabler-loader-2 animate-spin" />
             <div v-else :class="action.iconClass" />
             {{ action.label }}
+          </button>
+
+          <button
+            :id="`issue-todo-${issue.key}`"
+            class="px-3 py-1.5 text-xs shadow-sm dark:shadow-none transition flex items-center justify-center gap-2 font-bold backdrop-blur-sm rounded-lg border min-w-72px"
+            :class="isInTodo 
+              ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20' 
+              : 'bg-gray-50/80 dark:bg-gray-500/5 border-gray-200 dark:border-gray-500/30 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-500/10'"
+            type="button"
+            @click="emit('toggleTodo', issue.key)"
+          >
+            <div :class="isInTodo ? 'i-tabler-star-filled text-amber-500' : 'i-tabler-star'" />
+            {{ isInTodo ? (t('actions.in_todo') || 'In Todo') : (t('actions.add_todo') || 'Add Todo') }}
           </button>
 
           <button

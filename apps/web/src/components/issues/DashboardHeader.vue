@@ -13,6 +13,7 @@ interface Props {
   myProjects: DashboardProject[]
   isInitialLoading: boolean
   isRefreshing: boolean
+  activeTab: 'all' | 'todo'
 }
 
 const props = defineProps<Props>()
@@ -22,6 +23,7 @@ const emit = defineEmits<{
   (event: 'toggleLanguage'): void
   (event: 'update:projectFilter', value: string): void
   (event: 'update:unresolvedOnly', value: boolean): void
+  (event: 'update:activeTab', value: 'all' | 'todo'): void
   (event: 'refresh'): void
   (event: 'clearTransitionError'): void
 }>()
@@ -51,6 +53,27 @@ const unresolvedOnlyModel = computed({
           Managing tasks for
           <code class="bg-white dark:bg-gray-800 px-2 py-0.5 rounded-md text-teal-600 dark:text-teal-400 font-bold border border-gray-200 dark:border-gray-700 shadow-sm">{{ username }}</code>
         </p>
+      </div>
+
+      <div class="flex items-center gap-1 p-1 bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 w-fit lg:mx-auto">
+        <button
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200"
+          :class="activeTab === 'all' ? 'bg-white dark:bg-gray-900 text-teal-600 dark:text-teal-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          type="button"
+          @click="emit('update:activeTab', 'all')"
+        >
+          <div class="i-tabler-list-details" />
+          {{ t('common.all_bugs') || 'All Bugs' }}
+        </button>
+        <button
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200"
+          :class="activeTab === 'todo' ? 'bg-white dark:bg-gray-900 text-teal-600 dark:text-teal-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          type="button"
+          @click="emit('update:activeTab', 'todo')"
+        >
+          <div class="i-tabler-checkbox" />
+          {{ t('common.todo_list') || 'Todo List' }}
+        </button>
       </div>
 
       <Transition name="fade">

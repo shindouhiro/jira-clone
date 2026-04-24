@@ -1,4 +1,5 @@
 import { JiraClient } from '@jira/shared'
+import { useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
 interface UseJiraDashboardOptions {
@@ -18,6 +19,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
   const projectFilter = ref('')
   const unresolvedOnly = ref(true)
   const selectedIssueKey = ref<string | null>(null)
+  const activeTab = ref<'all' | 'todo'>('all')
 
   const { data: allMyIssuesData, isFetching: isInitialLoading } = jira.getBugs(() => '', () => false, 200)
 
@@ -48,7 +50,27 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     () => unresolvedOnly.value,
   )
 
-  const issues = computed(() => data.value?.issues || [])
+  const allIssues = computed(() => data.value?.issues || [])
+
+  // Todo List logic
+  const todoKeys = useLocalStorage<string[]>('jira-todo-keys', [])
+  
+  function toggleTodo(issueKey: string) {
+    const index = todoKeys.value.indexOf(issueKey)
+    if (index > -1) {
+      todoKeys.value.splice(index, 1)
+    } else {
+      todoKeys.value.push(issueKey)
+    }
+  }
+
+  const todoIssues = computed(() => {
+    return allIssues.value.filter(issue => todoKeys.value.includes(issue.key))
+  })
+
+  const issues = computed(() => {
+    return activeTab.value === 'todo' ? todoIssues.value : allIssues.value
+  })
 
   const {
     data: detailData,
@@ -157,6 +179,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     projectFilter,
     unresolvedOnly,
     selectedIssueKey,
+    activeTab,
     myProjects,
     isInitialLoading,
     issues,
@@ -173,5 +196,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     transitionError,
     handleTransition,
     handleAssign,
+    toggleTodo,
+    todoKeys,
   }
 }

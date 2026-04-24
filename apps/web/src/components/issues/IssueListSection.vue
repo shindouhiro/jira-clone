@@ -8,6 +8,7 @@ interface Props {
   issues: JiraIssue[]
   isFetching: boolean
   updatingKeys: Set<string>
+  todoKeys: string[]
   getStatusClass: (status: string) => string
   getQuickActions: (status: string) => QuickTransitionAction[]
 }
@@ -17,6 +18,7 @@ defineProps<Props>()
 const emit = defineEmits<{
   (event: 'openDetail', issueKey: string): void
   (event: 'transition', issueKey: string, transitionIds: string): void
+  (event: 'toggleTodo', issueKey: string): void
 }>()
 
 const { t } = useI18n()
@@ -47,10 +49,12 @@ function forwardTransition(issueKey: string, transitionIds: string) {
           :key="issue.key"
           :issue="issue"
           :is-updating="updatingKeys.has(issue.key)"
+          :is-in-todo="todoKeys.includes(issue.key)"
           :status-class="getStatusClass(issue.fields.status.name)"
           :quick-actions="getQuickActions(issue.fields.status.name)"
           @open-detail="emit('openDetail', $event)"
           @transition="forwardTransition"
+          @toggle-todo="emit('toggleTodo', $event)"
         />
       </TransitionGroup>
 

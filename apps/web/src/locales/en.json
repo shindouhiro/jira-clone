@@ -10,6 +10,8 @@
     "error_fetch": "Failed to fetch data, please check your network or login status",
     "actions": "Actions",
     "loading_bugs": "Fetching your bugs...",
+    "all_bugs": "All Issues",
+    "todo_list": "Todo List",
     "confirm": "Confirm",
     "cancel": "Cancel"
   },
@@ -31,6 +33,8 @@
     "confirm_transition_title": "Confirm Action",
     "confirm_transition_message": "Are you sure you want to transition {key}? This action will be synced to Jira immediately.",
     "assign": "Assign",
+    "add_todo": "Add Todo",
+    "in_todo": "In Todo",
     "search_user": "Search users...",
     "no_users_found": "No users found"
   },
