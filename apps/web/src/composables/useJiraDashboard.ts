@@ -15,6 +15,15 @@ export interface DashboardProject {
 
 export function useJiraDashboard(options: UseJiraDashboardOptions) {
   const jira = new JiraClient(options.username, options.password)
+  const openStatuses = new Set(['Open', '开放'])
+
+  function sortIssuesOpenFirst<T extends { fields: { status: { name: string } } }>(items: T[]) {
+    return [...items].sort((a, b) => {
+      const aIsOpen = openStatuses.has(a.fields.status.name) ? 1 : 0
+      const bIsOpen = openStatuses.has(b.fields.status.name) ? 1 : 0
+      return bIsOpen - aIsOpen
+    })
+  }
 
   const projectFilter = ref('')
   const unresolvedOnly = ref(true)
@@ -50,7 +59,10 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     () => unresolvedOnly.value,
   )
 
-  const allIssues = computed(() => data.value?.issues || [])
+  const allIssues = computed(() => {
+    const fetchedIssues = data.value?.issues || []
+    return sortIssuesOpenFirst(fetchedIssues)
+  })
 
   // Todo List logic
   const todoKeys = useLocalStorage<string[]>('jira-todo-keys', [])
