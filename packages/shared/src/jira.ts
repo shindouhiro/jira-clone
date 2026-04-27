@@ -57,7 +57,7 @@ export interface JiraTransition {
 export class JiraClient {
   private auth: string
 
-  constructor(username: string, password: string, private baseUrl: string = '/api-jira') {
+  constructor(username: string, password: string, private baseUrl: string = (import.meta as any).env?.VITE_JIRA_BASE_URL || '/api-jira') {
     this.auth = btoa(`${username}:${password}`)
   }
 

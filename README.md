@@ -27,3 +27,28 @@
 - 👤 **智能人员分配**: 包含搜索功能的经办人选择，支持特定的显示名称映射
 - 🔍 **深度详情**: 完整的 Issue 描述解析、评论互动及附件预览。
 - 🌓 **极质视觉**: 完美适配深色模式，采用玻璃拟态 (Glassmorphism) 设计风格，流畅的动效反馈。
+
+## 🐳 Docker 部署 (Docker Deployment)
+
+可以通过 Docker Compose 快速部署本项目。
+
+### 1. 准备环境变量
+在项目根目录创建 `.env` 文件（或直接在 shell 中导出）：
+
+```env
+VITE_JIRA_USERNAME=你的用户名
+VITE_JIRA_PASSWORD=你的密码
+VITE_JIRA_BASE_URL=/api-jira
+```
+
+### 2. 使用 Docker Compose 启动
+使用提供的 `docker-compose.yml` 文件拉取远程镜像并运行：
+
+```bash
+docker-compose up -d
+```
+
+服务启动后，可以通过 `http://localhost:8080` 访问。
+
+> [!NOTE]
+> 由于本项目是基于 Vite 的静态前端应用，环境变量通常在构建阶段嵌入。如果拉取的远程镜像未包含动态变量替换机制，建议通过修改 `.env` 并自行构建镜像。
