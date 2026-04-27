@@ -43,7 +43,21 @@ VITE_JIRA_BASE_URL=/api-jira
 
 ### 2. 使用 Docker Compose 启动
 使用提供的 `docker-compose.yml` 文件拉取远程镜像并运行：
+```yml
+version: '3.8'
 
+services:
+  jira-dashboard:
+    image: shindouhiro/jira-clone:latest
+    container_name: jira-dashboard
+    ports:
+      - "8080:80"
+    environment:
+      - VITE_JIRA_USERNAME=${VITE_JIRA_USERNAME}
+      - VITE_JIRA_PASSWORD=${VITE_JIRA_PASSWORD}
+      - VITE_JIRA_BASE_URL=${VITE_JIRA_BASE_URL:-/api-jira}
+    restart: always
+```
 ```bash
 docker-compose up -d
 ```
