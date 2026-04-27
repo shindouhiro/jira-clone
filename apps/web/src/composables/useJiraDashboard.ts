@@ -194,6 +194,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     activeTab,
     myProjects,
     isInitialLoading,
+    allIssues,
     issues,
     isFetching,
     fetchBugs,

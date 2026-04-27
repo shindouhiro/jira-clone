@@ -20,6 +20,8 @@ interface Props {
   myProjects: DashboardProject[]
   isInitialLoading: boolean
   isRefreshing: boolean
+  allCount: number
+  todoCount: number
 }
 
 const { t } = useI18n()
@@ -50,6 +52,15 @@ const { t } = useI18n()
         >
           <div class="i-tabler-list-details" />
           {{ t('common.all_bugs') || 'All Bugs' }}
+          <span
+            v-if="allCount > 0"
+            class="ml-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[10px] font-black transition-colors"
+            :class="activeTab === 'all'
+              ? 'bg-teal-500 text-white dark:bg-teal-400 dark:text-gray-900'
+              : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 group-hover:bg-teal-500 group-hover:text-white'"
+          >
+            {{ allCount }}
+          </span>
         </button>
         <button
           class="flex items-center gap-2 rounded-lg bg-transparent px-4 py-2 text-sm font-bold transition-all duration-300"
@@ -61,6 +72,15 @@ const { t } = useI18n()
         >
           <div class="i-tabler-checkbox" />
           {{ t('common.todo_list') || 'Todo List' }}
+          <span
+            v-if="todoCount > 0"
+            class="ml-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[10px] font-black transition-colors"
+            :class="activeTab === 'todo'
+              ? 'bg-teal-500 text-white dark:bg-teal-400 dark:text-gray-900'
+              : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 group-hover:bg-teal-500 group-hover:text-white'"
+          >
+            {{ todoCount }}
+          </span>
         </button>
       </div>
 

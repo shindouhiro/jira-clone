@@ -33,6 +33,7 @@ const {
   selectedIssueKey,
   myProjects,
   isInitialLoading,
+  allIssues,
   issues,
   isFetching,
   fetchBugs,
@@ -121,6 +122,8 @@ function refreshIssues() {
         :my-projects="myProjects"
         :is-initial-loading="isInitialLoading"
         :is-refreshing="isFetching"
+        :all-count="allIssues.length"
+        :todo-count="todoKeys.length"
         @toggle-theme="toggleDark()"
         @toggle-language="toggleLanguage"
         @refresh="refreshIssues"
