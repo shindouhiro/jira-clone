@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  jira-dashboard:
+    image: shindouhiro/jira-clone:latest
+    container_name: jira-dashboard
+    ports:
+      - "8080:80"
+    environment:
+      - VITE_JIRA_USERNAME=${VITE_JIRA_USERNAME}
+      - VITE_JIRA_PASSWORD=${VITE_JIRA_PASSWORD}
+      - VITE_JIRA_BASE_URL=${VITE_JIRA_BASE_URL:-/api-jira}
+    restart: always
