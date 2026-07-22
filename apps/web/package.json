@@ -12,6 +12,7 @@
   "dependencies": {
     "@jira/shared": "workspace:*",
     "@vueuse/core": "catalog:prod",
+    "exceljs": "catalog:prod",
     "pinia": "catalog:prod",
     "vue": "catalog:prod",
     "vue-i18n": "catalog:",

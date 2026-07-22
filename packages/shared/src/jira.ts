@@ -1,5 +1,5 @@
 import { useFetch } from '@vueuse/core'
-import { ref } from 'vue'
+import { ref, shallowRef, watch } from 'vue'
 
 export interface JiraIssue {
   key: string
@@ -16,6 +16,12 @@ export interface JiraIssue {
       key: string
       name: string
     }
+    issuetype?: {
+      name: string
+    }
+    resolution?: {
+      name: string
+    } | null
     description: string
     created: string
     updated: string
@@ -47,6 +53,8 @@ export interface JiraUser {
 export interface JiraSearchResponse {
   issues: JiraIssue[]
   total: number
+  startAt?: number
+  maxResults?: number
 }
 
 export interface JiraTransition {
@@ -61,10 +69,76 @@ export class JiraClient {
     this.auth = btoa(`${username}:${password}`)
   }
 
+  private buildAssignedIssuesJql(project?: string, unresolvedOnly = false) {
+    const escapedProject = project?.replace(/([\\"])/g, '\\$1')
+    let jql = escapedProject
+      ? `project = "${escapedProject}" AND assignee = currentUser()`
+      : 'issuetype = Bug AND assignee = currentUser()'
+
+    if (unresolvedOnly)
+      jql += ' AND resolution = Unresolved'
+
+    return `${jql} ORDER BY created DESC`
+  }
+
+  private async fetchAllIssues(jql: string, signal?: AbortSignal, fields?: string[]): Promise<JiraSearchResponse> {
+    const issues: JiraIssue[] = []
+    const pageSize = 100
+    let startAt = 0
+    let total = 0
+
+    do {
+      const params = new URLSearchParams({
+        jql,
+        startAt: startAt.toString(),
+        maxResults: pageSize.toString(),
+      })
+      if (fields?.length)
+        params.set('fields', fields.join(','))
+
+      const response = await fetch(`${this.baseUrl}/rest/api/2/search?${params.toString()}`, {
+        headers: {
+          Authorization: `Basic ${this.auth}`,
+          Accept: 'application/json',
+        },
+        signal,
+      })
+
+      if (!response.ok)
+        throw new Error(`HTTP ${response.status} ${response.statusText}`)
+
+      const page = await response.json() as JiraSearchResponse
+      issues.push(...page.issues)
+      total = page.total
+      startAt += page.issues.length
+
+      if (page.issues.length === 0)
+        break
+    } while (startAt < total)
+
+    return {
+      issues,
+      total,
+      startAt: 0,
+      maxResults: issues.length,
+    }
+  }
+
   getAuthHeaders() {
     return {
       Authorization: `Basic ${this.auth}`,
     }
+  }
+
+  async getAttachmentBlob(url: string) {
+    const response = await fetch(this.resolveUrl(url), {
+      headers: this.getAuthHeaders(),
+    })
+
+    if (!response.ok)
+      throw new Error(`HTTP ${response.status} ${response.statusText}`)
+
+    return response.blob()
   }
 
   /**
@@ -89,40 +163,82 @@ export class JiraClient {
   }
 
   /**
-   * 获取 Bug 列表
-   * 返回 VueUse 的 useFetch 对象
+   * 获取看板问题列表。
+   * 未选择项目时显示分配给当前用户的 Bug；选择项目后显示该项目中分配给当前用户的全部问题。
+   * Jira 搜索接口可能限制单页大小，因此自动请求后续分页。
    */
-  getBugs(project: () => string | undefined, unresolvedOnly: () => boolean, maxResults = 50) {
-    const url = () => {
-      let jql = 'issuetype = Bug AND assignee = currentUser()'
-      const p = project()
-      if (p)
-        jql += ` AND project = "${p}"`
-      if (unresolvedOnly())
-        jql += ' AND resolution = Unresolved'
+  getBugs(project: () => string | undefined, unresolvedOnly: () => boolean) {
+    const data = shallowRef<JiraSearchResponse>()
+    const error = shallowRef<unknown>(null)
+    const isFetching = shallowRef(false)
+    let activeController: AbortController | undefined
+    let requestSequence = 0
 
-      jql += ' ORDER BY created DESC'
+    const execute = async () => {
+      activeController?.abort()
+      const controller = new AbortController()
+      activeController = controller
+      const currentSequence = ++requestSequence
+      const jql = this.buildAssignedIssuesJql(project(), unresolvedOnly())
 
-      const params = new URLSearchParams({
-        jql,
-        maxResults: maxResults.toString(),
-      })
+      error.value = null
+      isFetching.value = true
 
-      return `${this.baseUrl}/rest/api/2/search?${params.toString()}`
+      try {
+        const response = await this.fetchAllIssues(jql, controller.signal)
+
+        if (currentSequence === requestSequence)
+          data.value = response
+      }
+      catch (fetchError) {
+        if (currentSequence === requestSequence)
+          error.value = fetchError
+      }
+      finally {
+        if (currentSequence === requestSequence) {
+          isFetching.value = false
+          activeController = undefined
+        }
+      }
     }
 
-    return useFetch(url, {
-      headers: {
-        Authorization: `Basic ${this.auth}`,
-        Accept: 'application/json',
+    watch(
+      [project, unresolvedOnly],
+      (_values, _oldValues, onCleanup) => {
+        void execute()
+        onCleanup(() => {
+          requestSequence++
+          activeController?.abort()
+          activeController = undefined
+        })
       },
-    }, {
-      refetch: true, // 监听 URL 变化并自动重新拉取
-      beforeFetch({ options }) {
-        // 可以在这里添加通用的请求拦截逻辑
-        return { options }
-      },
-    }).get().json<JiraSearchResponse>()
+      { immediate: true },
+    )
+
+    return { data, error, isFetching, execute }
+  }
+
+  /**
+   * 获取当前用户在指定项目中的全部问题，不受看板状态筛选影响。
+   */
+  getAllAssignedIssues(project?: string) {
+    return this.fetchAllIssues(
+      this.buildAssignedIssuesJql(project),
+      undefined,
+      [
+        'summary',
+        'status',
+        'priority',
+        'assignee',
+        'project',
+        'issuetype',
+        'resolution',
+        'description',
+        'created',
+        'updated',
+        'attachment',
+      ],
+    )
   }
 
   /**
@@ -173,6 +289,24 @@ export class JiraClient {
         return { options }
       },
     }).get().json<{ transitions: JiraTransition[] }>()
+  }
+
+  /**
+   * 一次性获取 Issue 的可用转换列表（命令式，非响应式）
+   * 用于快速操作前动态查找正确的 transition ID
+   */
+  async getTransitionsOnce(issueKey: string): Promise<JiraTransition[]> {
+    const url = `${this.baseUrl}/rest/api/2/issue/${issueKey}/transitions`
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Basic ${this.auth}`,
+        'Accept': 'application/json',
+      },
+    })
+    if (!res.ok)
+      throw new Error(`HTTP ${res.status} ${res.statusText}`)
+    const data = await res.json()
+    return data.transitions || []
   }
 
   /**

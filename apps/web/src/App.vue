@@ -46,9 +46,12 @@ const {
   errorMessage,
   updatingKeys,
   transitionError,
+  isExporting,
+  exportProgress,
   activeTab,
   toggleTodo,
   todoKeys,
+  exportAllIssues,
   handleTransition: originalHandleTransition,
   handleAssign: originalHandleAssign,
 } = dashboard
@@ -121,11 +124,14 @@ function refreshIssues() {
         :transition-error="transitionError"
         :my-projects="myProjects"
         :is-initial-loading="isInitialLoading"
+        :is-exporting="isExporting"
+        :export-progress="exportProgress"
         :is-refreshing="isFetching"
         :all-count="allIssues.length"
         :todo-count="todoKeys.length"
         @toggle-theme="toggleDark()"
         @toggle-language="toggleLanguage"
+        @export-issues="exportAllIssues"
         @refresh="refreshIssues"
         @clear-transition-error="clearTransitionError"
       />

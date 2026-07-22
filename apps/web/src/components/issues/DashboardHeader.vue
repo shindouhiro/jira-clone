@@ -5,6 +5,7 @@ defineProps<Props>()
 const emit = defineEmits<{
   (event: 'toggleTheme'): void
   (event: 'toggleLanguage'): void
+  (event: 'exportIssues'): void
   (event: 'refresh'): void
   (event: 'clearTransitionError'): void
 }>()
@@ -19,6 +20,8 @@ interface Props {
   transitionError: string | null
   myProjects: DashboardProject[]
   isInitialLoading: boolean
+  isExporting: boolean
+  exportProgress: number
   isRefreshing: boolean
   allCount: number
   todoCount: number
@@ -199,6 +202,18 @@ const { t } = useI18n()
       </label>
 
       <div class="mx-1 hidden h-6 w-px bg-gray-200 sm:block dark:bg-gray-800" />
+
+      <button
+        id="dashboard-export-issues-button"
+        class="h-8 flex items-center gap-2 border border-gray-200 rounded-lg bg-gray-50 px-3 text-sm text-gray-600 font-bold shadow-sm transition hover:border-teal-500/40 hover:bg-teal-50 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-teal-400/40 dark:hover:bg-teal-500/10 dark:hover:text-teal-300"
+        :disabled="isExporting || isInitialLoading"
+        type="button"
+        @click="emit('exportIssues')"
+      >
+        <div v-if="isExporting" class="i-tabler-loader-2 animate-spin" />
+        <div v-else class="i-tabler-file-spreadsheet" />
+        {{ isExporting ? `${t('common.exporting_issues')} ${exportProgress}%` : t('common.export_all_issues') }}
+      </button>
 
       <button
         id="dashboard-refresh-button"

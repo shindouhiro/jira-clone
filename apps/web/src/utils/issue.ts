@@ -32,8 +32,15 @@ const statusColors: Record<string, string> = {
 
 const openedStatuses = new Set(['To Do', 'Open', '待办', '开放'])
 const reopenedStatuses = new Set(['Reopened', '再次打开'])
-const inProgressStatuses = new Set(['In Progress', '处理中', '进行中'])
-const resolvedStatuses = new Set(['Resolved', '已解决'])
+const inProgressStatuses = new Set(['In Progress', '处理中', '进行中', 'Under Review', '审核中'])
+export const resolvedStatuses = new Set([
+  'Resolved', '已解决',
+  'Fixed', '已修复',
+  'Done', '已完成',
+  'Closed', '已关闭',
+  'Verified', '已验证',
+  'Complete', '完成',
+])
 
 export function getStatusClass(status: string) {
   return statusColors[status] || 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-500/20 dark:text-gray-400 dark:border-gray-500/50'
@@ -49,13 +56,51 @@ export function cleanJiraDescription(description?: string) {
   return description.replace(/!.*?!/g, '').trim()
 }
 
+/**
+ * 转换意图到 Jira transition 名称的模式匹配表
+ * 用于动态查找正确的 transition ID，而非硬编码
+ */
+const TRANSITION_INTENT_PATTERNS: Record<string, string[]> = {
+  start: ['start progress', '开始处理', '处理', '进行中', 'in progress', 'start'],
+  resolve: ['resolve', '解决', '已解决', '修复', '已修复', 'done', '完成', 'fixed'],
+  test: ['test', '测试', 'start testing', '开始测试', 'verify', '验证', 'qa'],
+  reopen: ['reopen', '重新打开', '再次打开'],
+  close: ['close', '关闭', 'closed'],
+}
+
+/**
+ * 根据语义意图从可用的 transitions 中找到匹配项
+ */
+export function findTransitionByIntent(
+  transitions: { id: string, name: string }[],
+  intent: string,
+): { id: string, name: string } | null {
+  const patterns = TRANSITION_INTENT_PATTERNS[intent]
+  if (!patterns)
+    return null
+
+  const normalizedTransitions = transitions.map(t => ({
+    ...t,
+    normalizedName: t.name.toLowerCase().trim(),
+  }))
+
+  for (const pattern of patterns) {
+    const match = normalizedTransitions.find(t =>
+      t.normalizedName.includes(pattern.toLowerCase()),
+    )
+    if (match)
+      return match
+  }
+
+  return null
+}
+
 export function resolveQuickActions(statusName: string, t: (key: string) => string): QuickTransitionAction[] {
   if (openedStatuses.has(statusName) || reopenedStatuses.has(statusName)) {
-    const transitionIds = reopenedStatuses.has(statusName) ? '51,21' : '11,21'
     return [{
       key: 'resolve-directly',
       label: t('actions.resolve_directly'),
-      transitionIds,
+      transitionIds: 'start,resolve,test',
       iconClass: 'i-tabler-player-play',
       className: 'backdrop-blur-sm bg-amber-50/80 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-lg px-3 py-1.5 transition duration-300 hover:bg-amber-100 dark:hover:bg-amber-500/15 dark:hover:border-amber-400 dark:hover:text-amber-300 hover:shadow-[0_0_15px_rgba(245,158,11,0.15)] active:scale-95',
     }]
@@ -65,7 +110,7 @@ export function resolveQuickActions(statusName: string, t: (key: string) => stri
     return [{
       key: 'resolve',
       label: t('actions.resolve'),
-      transitionIds: '21',
+      transitionIds: 'resolve,test',
       iconClass: 'i-tabler-check',
       className: 'backdrop-blur-sm bg-green-50/80 dark:bg-green-500/5 border border-green-200 dark:border-green-500/40 text-green-600 dark:text-green-400 rounded-lg px-3 py-1.5 transition duration-300 hover:bg-green-100 dark:hover:bg-green-500/15 dark:hover:border-green-400 dark:hover:text-green-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.15)] active:scale-95',
     }]
@@ -75,7 +120,7 @@ export function resolveQuickActions(statusName: string, t: (key: string) => stri
     return [{
       key: 'start-testing',
       label: t('actions.start_testing'),
-      transitionIds: '31',
+      transitionIds: 'test',
       iconClass: 'i-tabler-test-pipe',
       className: 'backdrop-blur-sm bg-blue-50/80 dark:bg-blue-500/5 border border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-400 rounded-lg px-3 py-1.5 transition duration-300 hover:bg-blue-100 dark:hover:bg-blue-500/15 dark:hover:border-blue-400 dark:hover:text-blue-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] active:scale-95',
     }]

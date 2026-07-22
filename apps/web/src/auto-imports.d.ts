@@ -22,6 +22,7 @@ declare global {
   const createEventHook: typeof import('@vueuse/core')['createEventHook']
   const createGlobalState: typeof import('@vueuse/core')['createGlobalState']
   const createInjectionState: typeof import('@vueuse/core')['createInjectionState']
+  const createIssuesWorkbook: typeof import('./utils/exportIssues')['createIssuesWorkbook']
   const createPinia: typeof import('pinia')['createPinia']
   const createReactiveFn: typeof import('@vueuse/core')['createReactiveFn']
   const createRef: typeof import('@vueuse/core')['createRef']
@@ -35,9 +36,11 @@ declare global {
   const defineAsyncComponent: typeof import('vue')['defineAsyncComponent']
   const defineComponent: typeof import('vue')['defineComponent']
   const defineStore: typeof import('pinia')['defineStore']
+  const downloadIssuesXlsx: typeof import('./utils/exportIssues')['downloadIssuesXlsx']
   const eagerComputed: typeof import('@vueuse/core')['eagerComputed']
   const effectScope: typeof import('vue')['effectScope']
   const extendRef: typeof import('@vueuse/core')['extendRef']
+  const findTransitionByIntent: typeof import('./utils/issue')['findTransitionByIntent']
   const formatDisplayName: typeof import('./utils/issue')['formatDisplayName']
   const formatIssueDate: typeof import('./utils/issue')['formatIssueDate']
   const formatIssueDateTime: typeof import('./utils/issue')['formatIssueDateTime']
@@ -105,6 +108,7 @@ declare global {
   const resolveQuickActions: typeof import('./utils/issue')['resolveQuickActions']
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
+  const resolvedStatuses: typeof import('./utils/issue')['resolvedStatuses']
   const setActivePinia: typeof import('pinia')['setActivePinia']
   const setMapStoreSuffix: typeof import('pinia')['setMapStoreSuffix']
   const shallowReactive: typeof import('vue')['shallowReactive']
@@ -351,6 +355,7 @@ declare module 'vue' {
     readonly createEventHook: UnwrapRef<typeof import('@vueuse/core')['createEventHook']>
     readonly createGlobalState: UnwrapRef<typeof import('@vueuse/core')['createGlobalState']>
     readonly createInjectionState: UnwrapRef<typeof import('@vueuse/core')['createInjectionState']>
+    readonly createIssuesWorkbook: UnwrapRef<typeof import('./utils/exportIssues')['createIssuesWorkbook']>
     readonly createPinia: UnwrapRef<typeof import('pinia')['createPinia']>
     readonly createReactiveFn: UnwrapRef<typeof import('@vueuse/core')['createReactiveFn']>
     readonly createRef: UnwrapRef<typeof import('@vueuse/core')['createRef']>
@@ -364,9 +369,11 @@ declare module 'vue' {
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly defineStore: UnwrapRef<typeof import('pinia')['defineStore']>
+    readonly downloadIssuesXlsx: UnwrapRef<typeof import('./utils/exportIssues')['downloadIssuesXlsx']>
     readonly eagerComputed: UnwrapRef<typeof import('@vueuse/core')['eagerComputed']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly extendRef: UnwrapRef<typeof import('@vueuse/core')['extendRef']>
+    readonly findTransitionByIntent: UnwrapRef<typeof import('./utils/issue')['findTransitionByIntent']>
     readonly formatDisplayName: UnwrapRef<typeof import('./utils/issue')['formatDisplayName']>
     readonly formatIssueDate: UnwrapRef<typeof import('./utils/issue')['formatIssueDate']>
     readonly formatIssueDateTime: UnwrapRef<typeof import('./utils/issue')['formatIssueDateTime']>
@@ -434,6 +441,7 @@ declare module 'vue' {
     readonly resolveQuickActions: UnwrapRef<typeof import('./utils/issue')['resolveQuickActions']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
+    readonly resolvedStatuses: UnwrapRef<typeof import('./utils/issue')['resolvedStatuses']>
     readonly setActivePinia: UnwrapRef<typeof import('pinia')['setActivePinia']>
     readonly setMapStoreSuffix: UnwrapRef<typeof import('pinia')['setMapStoreSuffix']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>

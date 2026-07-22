@@ -28,6 +28,7 @@ catalogs:
     vue-tsc: ^2.2.0
   prod:
     '@vueuse/core': ^12.4.0
+    exceljs: ^4.4.0
     pinia: ^2.3.0
     vue: ^3.5.13
     vue-router: ^4.5.0
