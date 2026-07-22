@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { DashboardProject } from '@/composables/useJiraDashboard'
+import type { JiraUser } from '@jira/shared'
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<{
   (event: 'toggleTheme'): void
   (event: 'toggleLanguage'): void
@@ -11,7 +12,48 @@ const emit = defineEmits<{
 }>()
 const projectFilter = defineModel<string>('projectFilter', { required: true })
 const unresolvedOnly = defineModel<boolean>('unresolvedOnly', { required: true })
+const assigneeFilter = defineModel<string[]>('assigneeFilter', { required: true })
 const activeTab = defineModel<'all' | 'todo'>('activeTab', { required: true })
+
+const isAssigneeDropdownOpen = ref(false)
+const assigneeDropdownRef = ref<HTMLElement | null>(null)
+
+onClickOutside(assigneeDropdownRef, () => {
+  isAssigneeDropdownOpen.value = false
+})
+
+const assigneeDisplayText = computed(() => {
+  if (assigneeFilter.value.length === 0 || assigneeFilter.value.includes('all')) return 'All Personnel'
+  if (assigneeFilter.value.includes('currentUser()') && assigneeFilter.value.length === 1) return 'Me'
+  if (assigneeFilter.value.length === 1) {
+    const user = props.projectUsers?.find(u => u.name === assigneeFilter.value[0])
+    return user ? (user.displayName || user.name) : assigneeFilter.value[0]
+  }
+  return `${assigneeFilter.value.length} Selected`
+})
+
+function toggleAssignee(value: string) {
+  if (value === 'all') {
+    if (!assigneeFilter.value.includes('all')) {
+      assigneeFilter.value = ['all']
+    } else {
+      assigneeFilter.value = []
+    }
+    return
+  }
+
+  const allIndex = assigneeFilter.value.indexOf('all')
+  if (allIndex > -1) {
+    assigneeFilter.value.splice(allIndex, 1)
+  }
+
+  const idx = assigneeFilter.value.indexOf(value)
+  if (idx > -1) {
+    assigneeFilter.value.splice(idx, 1)
+  } else {
+    assigneeFilter.value.push(value)
+  }
+}
 
 interface Props {
   username: string
@@ -19,6 +61,8 @@ interface Props {
   isDark: boolean
   transitionError: string | null
   myProjects: DashboardProject[]
+  projectUsers?: JiraUser[]
+  isUsersLoading?: boolean
   isInitialLoading: boolean
   isExporting: boolean
   exportProgress: number
@@ -174,6 +218,75 @@ const { t } = useI18n()
             <div v-if="isInitialLoading" class="i-tabler-loader-2 animate-spin text-xs" />
             <div v-else class="i-tabler-chevron-down text-xs" />
           </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label for="dashboard-assignee-filter" class="i-tabler-user text-gray-500 dark:text-gray-500">
+          <span class="sr-only">{{ t('common.assignee_filter') || 'Assignee filter' }}</span>
+        </label>
+        <div class="relative min-w-40" ref="assigneeDropdownRef">
+          <button
+            id="dashboard-assignee-filter"
+            type="button"
+            class="relative flex h-8 w-full cursor-pointer appearance-none items-center justify-between border border-gray-200 rounded-lg bg-gray-50 py-1 pl-3 pr-8 text-sm text-gray-900 outline-none transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-white disabled:opacity-50 focus:ring-2 focus:ring-teal-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            :disabled="isInitialLoading || isUsersLoading"
+            @click="isAssigneeDropdownOpen = !isAssigneeDropdownOpen"
+          >
+            <span class="truncate font-medium">{{ assigneeDisplayText }}</span>
+            <div class="pointer-events-none absolute right-2 top-1/2 text-gray-400 -translate-y-1/2 dark:text-gray-500">
+              <div v-if="isUsersLoading" class="i-tabler-loader-2 animate-spin text-xs" />
+              <div v-else class="i-tabler-chevron-down text-xs" />
+            </div>
+          </button>
+          
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="transform scale-95 opacity-0"
+            enter-to-class="transform scale-100 opacity-100"
+            leave-active-class="transition duration-75 ease-in"
+            leave-from-class="transform scale-100 opacity-100"
+            leave-to-class="transform scale-95 opacity-0"
+          >
+            <div
+              v-if="isAssigneeDropdownOpen"
+              class="absolute right-0 z-20 mt-1.5 max-h-64 w-48 overflow-y-auto border border-gray-200 rounded-xl bg-white py-1.5 shadow-xl dark:border-gray-800 dark:bg-[#1a1a1a]"
+            >
+              <button
+                type="button"
+                class="w-full flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm transition-colors"
+                :class="assigneeFilter.includes('all') || assigneeFilter.length === 0 ? 'bg-teal-500 text-white font-bold' : 'bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
+                @click="toggleAssignee('all')"
+              >
+                <div :class="assigneeFilter.includes('all') || assigneeFilter.length === 0 ? 'i-tabler-check opacity-100' : 'opacity-0 w-4'" class="shrink-0 text-sm" />
+                <span class="truncate">All Personnel</span>
+              </button>
+
+              <button
+                type="button"
+                class="w-full flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm transition-colors"
+                :class="assigneeFilter.includes('currentUser()') ? 'bg-teal-500 text-white font-bold' : 'bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
+                @click="toggleAssignee('currentUser()')"
+              >
+                <div :class="assigneeFilter.includes('currentUser()') ? 'i-tabler-check opacity-100' : 'opacity-0 w-4'" class="shrink-0 text-sm" />
+                <span class="truncate">Me</span>
+              </button>
+
+              <div class="my-1 h-px w-full bg-gray-200 dark:bg-gray-700"></div>
+
+              <button
+                v-for="user in projectUsers"
+                :key="user.key"
+                type="button"
+                class="w-full flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm transition-colors"
+                :class="assigneeFilter.includes(user.name) ? 'bg-teal-500 text-white font-bold' : 'bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
+                @click="toggleAssignee(user.name)"
+              >
+                <div :class="assigneeFilter.includes(user.name) ? 'i-tabler-check opacity-100' : 'opacity-0 w-4'" class="shrink-0 text-sm" />
+                <span class="truncate">{{ user.displayName || user.name }}</span>
+              </button>
+            </div>
+          </Transition>
         </div>
       </div>
 

@@ -30,8 +30,11 @@ const {
   jira,
   projectFilter,
   unresolvedOnly,
+  assigneeFilter,
   selectedIssueKey,
   myProjects,
+  projectUsers,
+  isUsersLoading,
   isInitialLoading,
   allIssues,
   issues,
@@ -117,12 +120,15 @@ function refreshIssues() {
       <DashboardHeader
         v-model:project-filter="projectFilter"
         v-model:unresolved-only="unresolvedOnly"
+        v-model:assignee-filter="assigneeFilter"
         v-model:active-tab="activeTab"
         :username="username"
         :locale="locale"
         :is-dark="isDark"
         :transition-error="transitionError"
         :my-projects="myProjects"
+        :project-users="projectUsers"
+        :is-users-loading="isUsersLoading"
         :is-initial-loading="isInitialLoading"
         :is-exporting="isExporting"
         :export-progress="exportProgress"

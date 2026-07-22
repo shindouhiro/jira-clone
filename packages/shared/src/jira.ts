@@ -1,5 +1,5 @@
 import { useFetch } from '@vueuse/core'
-import { ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 
 export interface JiraIssue {
   key: string
@@ -69,11 +69,16 @@ export class JiraClient {
     this.auth = btoa(`${username}:${password}`)
   }
 
-  private buildAssignedIssuesJql(project?: string, unresolvedOnly = false) {
+  private buildAssignedIssuesJql(project?: string, unresolvedOnly = false, assignees: string[] = ['currentUser()']) {
     const escapedProject = project?.replace(/([\\"])/g, '\\$1')
     let jql = escapedProject
-      ? `project = "${escapedProject}" AND assignee = currentUser()`
-      : 'issuetype = Bug AND assignee = currentUser()'
+      ? `project = "${escapedProject}"`
+      : 'issuetype = Bug'
+
+    if (assignees.length > 0 && !assignees.includes('all')) {
+      const formattedAssignees = assignees.map(a => a === 'currentUser()' ? 'currentUser()' : `"${a.replace(/([\\"])/g, '\\$1')}"`)
+      jql += ` AND assignee IN (${formattedAssignees.join(', ')})`
+    }
 
     if (unresolvedOnly)
       jql += ' AND resolution = Unresolved'
@@ -167,7 +172,7 @@ export class JiraClient {
    * 未选择项目时显示分配给当前用户的 Bug；选择项目后显示该项目中分配给当前用户的全部问题。
    * Jira 搜索接口可能限制单页大小，因此自动请求后续分页。
    */
-  getBugs(project: () => string | undefined, unresolvedOnly: () => boolean) {
+  getBugs(project: () => string | undefined, unresolvedOnly: () => boolean, assignees: () => string[] = () => ['currentUser()']) {
     const data = shallowRef<JiraSearchResponse>()
     const error = shallowRef<unknown>(null)
     const isFetching = shallowRef(false)
@@ -179,7 +184,7 @@ export class JiraClient {
       const controller = new AbortController()
       activeController = controller
       const currentSequence = ++requestSequence
-      const jql = this.buildAssignedIssuesJql(project(), unresolvedOnly())
+      const jql = this.buildAssignedIssuesJql(project(), unresolvedOnly(), assignees())
 
       error.value = null
       isFetching.value = true
@@ -437,6 +442,27 @@ export class JiraClient {
         Accept: 'application/json',
       },
     }).get().json<JiraProject[]>()
+  }
+
+  /**
+   * 查找项目下的可分配用户
+   */
+  getProjectUsers(projectKey: () => string) {
+    const url = computed(() => {
+      const pk = projectKey()
+      if (!pk) return ''
+      const params = new URLSearchParams({ project: pk })
+      return `${this.baseUrl}/rest/api/2/user/assignable/search?${params.toString()}`
+    })
+
+    return useFetch(url, {
+      headers: {
+        Authorization: `Basic ${this.auth}`,
+        Accept: 'application/json',
+      },
+    }, {
+      refetch: true,
+    }).get().json<JiraUser[]>()
   }
 }
 

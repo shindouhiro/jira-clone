@@ -29,6 +29,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
 
   const projectFilter = ref('LMSSER')
   const unresolvedOnly = ref(false)
+  const assigneeFilter = ref<string[]>(['currentUser()'])
   const selectedIssueKey = ref<string | null>(null)
   const activeTab = useLocalStorage<'all' | 'todo'>('jira-active-tab', 'all')
 
@@ -43,6 +44,12 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
       .sort((a, b) => a.name.localeCompare(b.name))
   })
 
+  const { data: projectUsersData, isFetching: isUsersLoading } = jira.getProjectUsers(() => projectFilter.value)
+
+  const projectUsers = computed(() => {
+    return projectUsersData.value || []
+  })
+
   const {
     data,
     error: fetchError,
@@ -51,6 +58,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
   } = jira.getBugs(
     () => projectFilter.value,
     () => unresolvedOnly.value,
+    () => assigneeFilter.value,
   )
 
   // 已成功流转的 issue key，立即从列表隐藏（不依赖 Jira API 刷新）
@@ -262,9 +270,12 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     jira,
     projectFilter,
     unresolvedOnly,
+    assigneeFilter,
     selectedIssueKey,
     activeTab,
     myProjects,
+    projectUsers,
+    isUsersLoading,
     isInitialLoading,
     allIssues,
     issues,
