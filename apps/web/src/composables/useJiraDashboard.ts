@@ -143,7 +143,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     transitionError.value = null
 
     try {
-      const response = await jira.getAllAssignedIssues(projectFilter.value)
+      const response = await jira.getAllAssignedIssues(projectFilter.value, assigneeFilter.value)
       exportProgress.value = 5
       await downloadIssuesXlsx(response.issues, {
         projectKey: projectFilter.value,

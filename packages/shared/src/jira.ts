@@ -224,11 +224,11 @@ export class JiraClient {
   }
 
   /**
-   * 获取当前用户在指定项目中的全部问题，不受看板状态筛选影响。
+   * 获取指定人员在指定项目中的全部问题，不受看板状态筛选影响。
    */
-  getAllAssignedIssues(project?: string) {
+  getAllAssignedIssues(project?: string, assignees: string[] = ['currentUser()']) {
     return this.fetchAllIssues(
-      this.buildAssignedIssuesJql(project),
+      this.buildAssignedIssuesJql(project, false, assignees),
       undefined,
       [
         'summary',
