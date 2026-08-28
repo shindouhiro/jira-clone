@@ -28,10 +28,11 @@ const statusColors: Record<string, string> = {
   '已修复': 'bg-green-50 text-green-600 border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/50',
   '开放': 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-400 dark:border-indigo-500/50',
   '再次打开': 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/50',
+  '重新打开': 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/50',
 }
 
 const openedStatuses = new Set(['To Do', 'Open', '待办', '开放'])
-const reopenedStatuses = new Set(['Reopened', '再次打开'])
+export const reopenedStatuses = new Set(['Reopened', '再次打开', '重新打开'])
 const inProgressStatuses = new Set(['In Progress', '处理中', '进行中', 'Under Review', '审核中'])
 export const resolvedStatuses = new Set([
   'Resolved', '已解决',

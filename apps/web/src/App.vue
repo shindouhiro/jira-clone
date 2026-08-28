@@ -37,6 +37,7 @@ const {
   isUsersLoading,
   isInitialLoading,
   allIssues,
+  reopenedIssues,
   issues,
   isFetching,
   fetchBugs,
@@ -134,6 +135,7 @@ function refreshIssues() {
         :export-progress="exportProgress"
         :is-refreshing="isFetching"
         :all-count="allIssues.length"
+        :reopened-count="reopenedIssues.length"
         :todo-count="todoKeys.length"
         @toggle-theme="toggleDark()"
         @toggle-language="toggleLanguage"
@@ -155,7 +157,7 @@ function refreshIssues() {
         </article>
       </Transition>
 
-      <main id="jira-dashboard-main" aria-label="Jira bug dashboard">
+      <main id="jira-dashboard-main" role="tabpanel" aria-label="Jira bug dashboard">
         <IssueListSection
           :issues="issues"
           :is-fetching="isFetching"

@@ -104,6 +104,7 @@ declare global {
   const refDefault: typeof import('@vueuse/core')['refDefault']
   const refThrottled: typeof import('@vueuse/core')['refThrottled']
   const refWithControl: typeof import('@vueuse/core')['refWithControl']
+  const reopenedStatuses: typeof import('./utils/issue')['reopenedStatuses']
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveQuickActions: typeof import('./utils/issue')['resolveQuickActions']
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
@@ -327,7 +328,7 @@ declare global {
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
-  export type { DashboardProject } from './composables/useJiraDashboard'
+  export type { DashboardTab, DashboardProject } from './composables/useJiraDashboard'
   import('./composables/useJiraDashboard')
   // @ts-ignore
   export type { JiraAttachment, QuickTransitionAction } from './utils/issue'
@@ -437,6 +438,7 @@ declare module 'vue' {
     readonly refDefault: UnwrapRef<typeof import('@vueuse/core')['refDefault']>
     readonly refThrottled: UnwrapRef<typeof import('@vueuse/core')['refThrottled']>
     readonly refWithControl: UnwrapRef<typeof import('@vueuse/core')['refWithControl']>
+    readonly reopenedStatuses: UnwrapRef<typeof import('./utils/issue')['reopenedStatuses']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveQuickActions: UnwrapRef<typeof import('./utils/issue')['resolveQuickActions']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>

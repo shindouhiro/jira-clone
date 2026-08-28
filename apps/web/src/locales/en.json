@@ -6,6 +6,8 @@
     "exporting_issues": "Exporting...",
     "all_projects": "All My Projects",
     "loading_projects": "Loading My Projects...",
+    "project_filter": "Project filter",
+    "assignee_filter": "Assignee filter",
     "unresolved_only": "Unresolved Only",
     "no_bugs": "No bugs found",
     "all_caught_up": "You're all caught up! Go grab a coffee.",
@@ -15,6 +17,8 @@
     "actions": "Actions",
     "loading_bugs": "Fetching your bugs...",
     "all_bugs": "All Issues",
+    "issue_views": "Issue views",
+    "reopened_list": "Reopened",
     "todo_list": "Todo List",
     "confirm": "Confirm",
     "cancel": "Cancel"

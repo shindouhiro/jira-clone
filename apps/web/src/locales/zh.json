@@ -6,6 +6,8 @@
     "exporting_issues": "导出中...",
     "all_projects": "所有我的项目",
     "loading_projects": "加载项目中...",
+    "project_filter": "项目筛选",
+    "assignee_filter": "负责人筛选",
     "unresolved_only": "仅显示未解决",
     "no_bugs": "未找到相关 Bug",
     "all_caught_up": "你已处理完所有任务！去喝杯咖啡吧。",
@@ -15,6 +17,8 @@
     "actions": "操作",
     "loading_bugs": "正在抓取 Bug 列表...",
     "all_bugs": "所有问题",
+    "issue_views": "问题视图",
+    "reopened_list": "再次打开",
     "todo_list": "待办列表",
     "confirm": "确定",
     "cancel": "取消"

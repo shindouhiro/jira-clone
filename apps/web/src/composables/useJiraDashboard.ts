@@ -2,7 +2,9 @@ import { JiraClient } from '@jira/shared'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, ref, shallowRef } from 'vue'
 import { downloadIssuesXlsx } from '@/utils/exportIssues'
-import { findTransitionByIntent, formatDisplayName, resolvedStatuses } from '@/utils/issue'
+import { findTransitionByIntent, formatDisplayName, reopenedStatuses, resolvedStatuses } from '@/utils/issue'
+
+export type DashboardTab = 'all' | 'reopened' | 'todo'
 
 interface UseJiraDashboardOptions {
   username: string
@@ -31,7 +33,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
   const unresolvedOnly = ref(false)
   const assigneeFilter = ref<string[]>(['currentUser()'])
   const selectedIssueKey = ref<string | null>(null)
-  const activeTab = useLocalStorage<'all' | 'todo'>('jira-active-tab', 'all')
+  const activeTab = useLocalStorage<DashboardTab>('jira-active-tab', 'all')
 
   const { data: projectsData, isFetching: isInitialLoading } = jira.getProjects()
 
@@ -94,8 +96,16 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     return allIssues.value.filter(issue => todoKeys.value.includes(issue.key))
   })
 
+  const reopenedIssues = computed(() => {
+    return allIssues.value.filter(issue => reopenedStatuses.has(issue.fields.status.name))
+  })
+
   const issues = computed(() => {
-    return activeTab.value === 'todo' ? todoIssues.value : allIssues.value
+    if (activeTab.value === 'todo')
+      return todoIssues.value
+    if (activeTab.value === 'reopened')
+      return reopenedIssues.value
+    return allIssues.value
   })
 
   const {
@@ -278,6 +288,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     isUsersLoading,
     isInitialLoading,
     allIssues,
+    reopenedIssues,
     issues,
     isFetching,
     fetchBugs,

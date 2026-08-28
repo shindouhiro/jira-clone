@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DashboardProject } from '@/composables/useJiraDashboard'
+import type { DashboardProject, DashboardTab } from '@/composables/useJiraDashboard'
 import type { JiraUser } from '@jira/shared'
 
 const props = defineProps<Props>()
@@ -13,7 +13,7 @@ const emit = defineEmits<{
 const projectFilter = defineModel<string>('projectFilter', { required: true })
 const unresolvedOnly = defineModel<boolean>('unresolvedOnly', { required: true })
 const assigneeFilter = defineModel<string[]>('assigneeFilter', { required: true })
-const activeTab = defineModel<'all' | 'todo'>('activeTab', { required: true })
+const activeTab = defineModel<DashboardTab>('activeTab', { required: true })
 
 const isAssigneeDropdownOpen = ref(false)
 const assigneeDropdownRef = ref<HTMLElement | null>(null)
@@ -68,6 +68,7 @@ interface Props {
   exportProgress: number
   isRefreshing: boolean
   allCount: number
+  reopenedCount: number
   todoCount: number
 }
 
@@ -88,12 +89,20 @@ const { t } = useI18n()
         </p>
       </div>
 
-      <div class="w-fit flex items-center gap-1 border border-gray-200 rounded-xl bg-gray-100/80 p-1 backdrop-blur-sm lg:mx-auto dark:border-gray-700 dark:bg-gray-800/80">
+      <div
+        class="max-w-full w-fit flex items-center gap-1 overflow-x-auto border border-gray-200 rounded-xl bg-gray-100/80 p-1 backdrop-blur-sm lg:mx-auto dark:border-gray-700 dark:bg-gray-800/80"
+        role="tablist"
+        :aria-label="t('common.issue_views')"
+      >
         <button
-          class="flex items-center gap-2 rounded-lg bg-transparent px-4 py-2 text-sm font-bold transition-all duration-300"
+          id="dashboard-tab-all"
+          class="flex shrink-0 items-center gap-2 rounded-lg bg-transparent px-4 py-2 text-sm font-bold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
           :class="activeTab === 'all'
             ? 'bg-teal-500/10 dark:bg-teal-400/10 text-teal-600 dark:text-teal-400 ring-1 ring-teal-500/20 dark:ring-teal-400/20 shadow-sm'
             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'"
+          role="tab"
+          :aria-selected="activeTab === 'all'"
+          aria-controls="jira-dashboard-main"
           type="button"
           @click="activeTab = 'all'"
         >
@@ -110,10 +119,38 @@ const { t } = useI18n()
           </span>
         </button>
         <button
-          class="flex items-center gap-2 rounded-lg bg-transparent px-4 py-2 text-sm font-bold transition-all duration-300"
+          id="dashboard-tab-reopened"
+          class="flex shrink-0 items-center gap-2 rounded-lg bg-transparent px-4 py-2 text-sm font-bold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+          :class="activeTab === 'reopened'
+            ? 'bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/20 shadow-sm dark:bg-rose-400/10 dark:text-rose-400 dark:ring-rose-400/20'
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'"
+          role="tab"
+          :aria-selected="activeTab === 'reopened'"
+          aria-controls="jira-dashboard-main"
+          type="button"
+          @click="activeTab = 'reopened'"
+        >
+          <div class="i-tabler-history-toggle" />
+          {{ t('common.reopened_list') }}
+          <span
+            v-if="reopenedCount > 0"
+            class="ml-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[10px] font-black transition-colors"
+            :class="activeTab === 'reopened'
+              ? 'bg-rose-500 text-white dark:bg-rose-400 dark:text-gray-900'
+              : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
+          >
+            {{ reopenedCount }}
+          </span>
+        </button>
+        <button
+          id="dashboard-tab-todo"
+          class="flex shrink-0 items-center gap-2 rounded-lg bg-transparent px-4 py-2 text-sm font-bold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
           :class="activeTab === 'todo'
             ? 'bg-teal-500/10 dark:bg-teal-400/10 text-teal-600 dark:text-teal-400 ring-1 ring-teal-500/20 dark:ring-teal-400/20 shadow-sm'
             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'"
+          role="tab"
+          :aria-selected="activeTab === 'todo'"
+          aria-controls="jira-dashboard-main"
           type="button"
           @click="activeTab = 'todo'"
         >
