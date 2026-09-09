@@ -31,10 +31,13 @@ const {
   projectFilter,
   unresolvedOnly,
   assigneeFilter,
+  priorityFilter,
   selectedIssueKey,
   myProjects,
   projectUsers,
+  priorities,
   isUsersLoading,
+  isPrioritiesLoading,
   isInitialLoading,
   allIssues,
   reopenedIssues,
@@ -122,6 +125,7 @@ function refreshIssues() {
         v-model:project-filter="projectFilter"
         v-model:unresolved-only="unresolvedOnly"
         v-model:assignee-filter="assigneeFilter"
+        v-model:priority-filter="priorityFilter"
         v-model:active-tab="activeTab"
         :username="username"
         :locale="locale"
@@ -129,7 +133,9 @@ function refreshIssues() {
         :transition-error="transitionError"
         :my-projects="myProjects"
         :project-users="projectUsers"
+        :priorities="priorities"
         :is-users-loading="isUsersLoading"
+        :is-priorities-loading="isPrioritiesLoading"
         :is-initial-loading="isInitialLoading"
         :is-exporting="isExporting"
         :export-progress="exportProgress"

@@ -8,6 +8,7 @@
     "loading_projects": "Loading My Projects...",
     "project_filter": "Project filter",
     "assignee_filter": "Assignee filter",
+    "priority_filter": "Priority Filter",
     "unresolved_only": "Unresolved Only",
     "no_bugs": "No bugs found",
     "all_caught_up": "You're all caught up! Go grab a coffee.",

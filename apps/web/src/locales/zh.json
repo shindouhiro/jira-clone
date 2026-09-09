@@ -8,6 +8,7 @@
     "loading_projects": "加载项目中...",
     "project_filter": "项目筛选",
     "assignee_filter": "负责人筛选",
+    "priority_filter": "优先级筛选",
     "unresolved_only": "仅显示未解决",
     "no_bugs": "未找到相关 Bug",
     "all_caught_up": "你已处理完所有任务！去喝杯咖啡吧。",

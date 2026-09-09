@@ -32,10 +32,12 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
   const projectFilter = ref('LMSSER')
   const unresolvedOnly = ref(false)
   const assigneeFilter = ref<string[]>(['currentUser()'])
+  const priorityFilter = ref<string[]>([])
   const selectedIssueKey = ref<string | null>(null)
   const activeTab = useLocalStorage<DashboardTab>('jira-active-tab', 'all')
 
   const { data: projectsData, isFetching: isInitialLoading } = jira.getProjects()
+  const { data: prioritiesData, isFetching: isPrioritiesLoading } = jira.getPriorities()
 
   const myProjects = computed<DashboardProject[]>(() => {
     return (projectsData.value || [])
@@ -44,6 +46,13 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
         name: project.name,
       }))
       .sort((a, b) => a.name.localeCompare(b.name))
+  })
+
+  const priorities = computed(() => {
+    return (prioritiesData.value || []).map(p => ({
+      ...p,
+      iconUrl: jira.resolveUrl(p.iconUrl)
+    }))
   })
 
   const { data: projectUsersData, isFetching: isUsersLoading } = jira.getProjectUsers(() => projectFilter.value)
@@ -61,6 +70,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     () => projectFilter.value,
     () => unresolvedOnly.value,
     () => assigneeFilter.value,
+    () => priorityFilter.value,
   )
 
   // 已成功流转的 issue key，立即从列表隐藏（不依赖 Jira API 刷新）
@@ -281,12 +291,15 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     projectFilter,
     unresolvedOnly,
     assigneeFilter,
+    priorityFilter,
     selectedIssueKey,
     activeTab,
     myProjects,
     projectUsers,
     isUsersLoading,
     isInitialLoading,
+    priorities,
+    isPrioritiesLoading,
     allIssues,
     reopenedIssues,
     issues,

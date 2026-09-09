@@ -69,7 +69,7 @@ export class JiraClient {
     this.auth = btoa(`${username}:${password}`)
   }
 
-  private buildAssignedIssuesJql(project?: string, unresolvedOnly = false, assignees: string[] = ['currentUser()']) {
+  private buildAssignedIssuesJql(project?: string, unresolvedOnly = false, assignees: string[] = ['currentUser()'], priority: string[] = []) {
     const escapedProject = project?.replace(/([\\"])/g, '\\$1')
     let jql = escapedProject
       ? `project = "${escapedProject}"`
@@ -78,6 +78,11 @@ export class JiraClient {
     if (assignees.length > 0 && !assignees.includes('all')) {
       const formattedAssignees = assignees.map(a => a === 'currentUser()' ? 'currentUser()' : `"${a.replace(/([\\"])/g, '\\$1')}"`)
       jql += ` AND assignee IN (${formattedAssignees.join(', ')})`
+    }
+
+    if (priority.length > 0 && !priority.includes('all')) {
+      const formattedPriorities = priority.map(p => `"${p.replace(/([\\"])/g, '\\$1')}"`)
+      jql += ` AND priority IN (${formattedPriorities.join(', ')})`
     }
 
     if (unresolvedOnly)
@@ -172,7 +177,7 @@ export class JiraClient {
    * 未选择项目时显示分配给当前用户的 Bug；选择项目后显示该项目中分配给当前用户的全部问题。
    * Jira 搜索接口可能限制单页大小，因此自动请求后续分页。
    */
-  getBugs(project: () => string | undefined, unresolvedOnly: () => boolean, assignees: () => string[] = () => ['currentUser()']) {
+  getBugs(project: () => string | undefined, unresolvedOnly: () => boolean, assignees: () => string[] = () => ['currentUser()'], priorities: () => string[] = () => []) {
     const data = shallowRef<JiraSearchResponse>()
     const error = shallowRef<unknown>(null)
     const isFetching = shallowRef(false)
@@ -184,7 +189,7 @@ export class JiraClient {
       const controller = new AbortController()
       activeController = controller
       const currentSequence = ++requestSequence
-      const jql = this.buildAssignedIssuesJql(project(), unresolvedOnly(), assignees())
+      const jql = this.buildAssignedIssuesJql(project(), unresolvedOnly(), assignees(), priorities())
 
       error.value = null
       isFetching.value = true
@@ -429,6 +434,19 @@ export class JiraClient {
         Accept: 'application/json',
       },
     }).get().json<JiraUser[]>()
+  }
+
+  /**
+   * 获取所有优先级
+   */
+  getPriorities() {
+    const url = `${this.baseUrl}/rest/api/2/priority`
+    return useFetch(url, {
+      headers: {
+        Authorization: `Basic ${this.auth}`,
+        Accept: 'application/json',
+      },
+    }).get().json<Array<{ id: string, name: string, iconUrl: string }>>()
   }
 
   /**

@@ -13,13 +13,21 @@ const emit = defineEmits<{
 const projectFilter = defineModel<string>('projectFilter', { required: true })
 const unresolvedOnly = defineModel<boolean>('unresolvedOnly', { required: true })
 const assigneeFilter = defineModel<string[]>('assigneeFilter', { required: true })
+const priorityFilter = defineModel<string[]>('priorityFilter', { required: true })
 const activeTab = defineModel<DashboardTab>('activeTab', { required: true })
 
 const isAssigneeDropdownOpen = ref(false)
 const assigneeDropdownRef = ref<HTMLElement | null>(null)
 
+const isPriorityDropdownOpen = ref(false)
+const priorityDropdownRef = ref<HTMLElement | null>(null)
+
 onClickOutside(assigneeDropdownRef, () => {
   isAssigneeDropdownOpen.value = false
+})
+
+onClickOutside(priorityDropdownRef, () => {
+  isPriorityDropdownOpen.value = false
 })
 
 const assigneeDisplayText = computed(() => {
@@ -30,6 +38,12 @@ const assigneeDisplayText = computed(() => {
     return user ? (user.displayName || user.name) : assigneeFilter.value[0]
   }
   return `${assigneeFilter.value.length} Selected`
+})
+
+const priorityDisplayText = computed(() => {
+  if (priorityFilter.value.length === 0 || priorityFilter.value.includes('all')) return 'All Priorities'
+  if (priorityFilter.value.length === 1) return priorityFilter.value[0]
+  return `${priorityFilter.value.length} Selected`
 })
 
 function toggleAssignee(value: string) {
@@ -55,6 +69,29 @@ function toggleAssignee(value: string) {
   }
 }
 
+function togglePriority(value: string) {
+  if (value === 'all') {
+    if (!priorityFilter.value.includes('all')) {
+      priorityFilter.value = ['all']
+    } else {
+      priorityFilter.value = []
+    }
+    return
+  }
+
+  const allIndex = priorityFilter.value.indexOf('all')
+  if (allIndex > -1) {
+    priorityFilter.value.splice(allIndex, 1)
+  }
+
+  const idx = priorityFilter.value.indexOf(value)
+  if (idx > -1) {
+    priorityFilter.value.splice(idx, 1)
+  } else {
+    priorityFilter.value.push(value)
+  }
+}
+
 interface Props {
   username: string
   locale: string
@@ -62,7 +99,9 @@ interface Props {
   transitionError: string | null
   myProjects: DashboardProject[]
   projectUsers?: JiraUser[]
+  priorities?: Array<{ id: string, name: string, iconUrl: string }>
   isUsersLoading?: boolean
+  isPrioritiesLoading?: boolean
   isInitialLoading: boolean
   isExporting: boolean
   exportProgress: number
@@ -321,6 +360,66 @@ const { t } = useI18n()
               >
                 <div :class="assigneeFilter.includes(user.name) ? 'i-tabler-check opacity-100' : 'opacity-0 w-4'" class="shrink-0 text-sm" />
                 <span class="truncate">{{ user.displayName || user.name }}</span>
+              </button>
+            </div>
+          </Transition>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label for="dashboard-priority-filter" class="i-tabler-flag text-gray-500 dark:text-gray-500">
+          <span class="sr-only">{{ t('common.priority_filter') || 'Priority filter' }}</span>
+        </label>
+        <div class="relative min-w-40" ref="priorityDropdownRef">
+          <button
+            id="dashboard-priority-filter"
+            type="button"
+            class="relative flex h-8 w-full cursor-pointer appearance-none items-center justify-between border border-gray-200 rounded-lg bg-gray-50 py-1 pl-3 pr-8 text-sm text-gray-900 outline-none transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-white disabled:opacity-50 focus:ring-2 focus:ring-teal-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            :disabled="isInitialLoading || isPrioritiesLoading"
+            @click="isPriorityDropdownOpen = !isPriorityDropdownOpen"
+          >
+            <span class="truncate font-medium">{{ priorityDisplayText }}</span>
+            <div class="pointer-events-none absolute right-2 top-1/2 text-gray-400 -translate-y-1/2 dark:text-gray-500">
+              <div v-if="isPrioritiesLoading" class="i-tabler-loader-2 animate-spin text-xs" />
+              <div v-else class="i-tabler-chevron-down text-xs" />
+            </div>
+          </button>
+          
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="transform scale-95 opacity-0"
+            enter-to-class="transform scale-100 opacity-100"
+            leave-active-class="transition duration-75 ease-in"
+            leave-from-class="transform scale-100 opacity-100"
+            leave-to-class="transform scale-95 opacity-0"
+          >
+            <div
+              v-if="isPriorityDropdownOpen"
+              class="absolute right-0 z-20 mt-1.5 max-h-64 w-48 overflow-y-auto border border-gray-200 rounded-xl bg-white py-1.5 shadow-xl dark:border-gray-800 dark:bg-[#1a1a1a]"
+            >
+              <button
+                type="button"
+                class="w-full flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm transition-colors"
+                :class="priorityFilter.includes('all') || priorityFilter.length === 0 ? 'bg-teal-500 text-white font-bold' : 'bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
+                @click="togglePriority('all')"
+              >
+                <div :class="priorityFilter.includes('all') || priorityFilter.length === 0 ? 'i-tabler-check opacity-100' : 'opacity-0 w-4'" class="shrink-0 text-sm" />
+                <span class="truncate">All Priorities</span>
+              </button>
+
+              <div class="my-1 h-px w-full bg-gray-200 dark:bg-gray-700"></div>
+
+              <button
+                v-for="priority in priorities"
+                :key="priority.id"
+                type="button"
+                class="w-full flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm transition-colors"
+                :class="priorityFilter.includes(priority.name) ? 'bg-teal-500 text-white font-bold' : 'bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
+                @click="togglePriority(priority.name)"
+              >
+                <div :class="priorityFilter.includes(priority.name) ? 'i-tabler-check opacity-100' : 'opacity-0 w-4'" class="shrink-0 text-sm" />
+                <img v-if="priority.iconUrl" :src="priority.iconUrl" class="h-4 w-4" alt="" />
+                <span class="truncate">{{ priority.name }}</span>
               </button>
             </div>
           </Transition>
