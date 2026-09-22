@@ -469,7 +469,7 @@ export class JiraClient {
     const url = computed(() => {
       const pk = projectKey()
       if (!pk) return ''
-      const params = new URLSearchParams({ project: pk })
+      const params = new URLSearchParams({ project: pk, maxResults: '1000' })
       return `${this.baseUrl}/rest/api/2/user/assignable/search?${params.toString()}`
     })
 

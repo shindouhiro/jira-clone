@@ -2,7 +2,8 @@
   "common": {
     "refresh": "Refresh",
     "refreshing": "Refreshing...",
-    "export_all_issues": "Export All",
+    "export_all_issues": "Export All Issues",
+    "export_json": "Export JSON",
     "exporting_issues": "Exporting...",
     "all_projects": "All My Projects",
     "loading_projects": "Loading My Projects...",

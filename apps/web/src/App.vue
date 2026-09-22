@@ -59,6 +59,7 @@ const {
   toggleTodo,
   todoKeys,
   exportAllIssues,
+  exportSingleIssue,
   handleTransition: originalHandleTransition,
   handleAssign: originalHandleAssign,
 } = dashboard
@@ -145,7 +146,7 @@ function refreshIssues() {
         :todo-count="todoKeys.length"
         @toggle-theme="toggleDark()"
         @toggle-language="toggleLanguage"
-        @export-issues="exportAllIssues"
+        @export-issues="(format) => exportAllIssues(format)"
         @refresh="refreshIssues"
         @clear-transition-error="clearTransitionError"
       />
@@ -174,6 +175,7 @@ function refreshIssues() {
           @open-detail="openDetail"
           @transition="handleTransitionWithConfirm"
           @toggle-todo="toggleTodo"
+          @export="exportSingleIssue"
         />
       </main>
     </div>

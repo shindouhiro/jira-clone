@@ -16,6 +16,7 @@ const emit = defineEmits<{
   (event: 'openDetail', issueKey: string): void
   (event: 'transition', issueKey: string, transitionIds: string): void
   (event: 'toggleTodo', issueKey: string): void
+  (event: 'export', issueKey: string, format: 'xlsx' | 'json'): void
 }>()
 
 const { t } = useI18n()
@@ -117,6 +118,30 @@ function runTransition(transitionIds: string) {
             <div class="i-tabler-user-edit" />
             {{ t('actions.assign') }}
           </button>
+          <div class="flex items-center gap-2">
+            <button
+              :id="`issue-export-xlsx-${issue.key}`"
+              class="flex-1 flex items-center justify-center gap-1.5 border border-gray-200 rounded-lg bg-gray-50/80 px-2 py-1.5 text-xs text-gray-600 font-bold shadow-sm backdrop-blur-sm transition active:scale-95 dark:border-gray-500/30 dark:bg-gray-500/5 dark:text-gray-300 dark:shadow-none hover:bg-gray-100 dark:hover:bg-gray-500/10 hover:text-teal-600"
+              type="button"
+              title="Export Excel"
+              :disabled="isUpdating"
+              @click.stop="emit('export', issue.key, 'xlsx')"
+            >
+              <div class="i-tabler-file-spreadsheet" />
+              Excel
+            </button>
+            <button
+              :id="`issue-export-json-${issue.key}`"
+              class="flex-1 flex items-center justify-center gap-1.5 border border-gray-200 rounded-lg bg-gray-50/80 px-2 py-1.5 text-xs text-gray-600 font-bold shadow-sm backdrop-blur-sm transition active:scale-95 dark:border-gray-500/30 dark:bg-gray-500/5 dark:text-gray-300 dark:shadow-none hover:bg-gray-100 dark:hover:bg-gray-500/10 hover:text-teal-600"
+              type="button"
+              title="Export JSON"
+              :disabled="isUpdating"
+              @click.stop="emit('export', issue.key, 'json')"
+            >
+              <div class="i-tabler-file-code" />
+              JSON
+            </button>
+          </div>
         </div>
       </aside>
     </div>

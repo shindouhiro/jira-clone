@@ -1,7 +1,6 @@
 import { JiraClient } from '@jira/shared'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, ref, shallowRef } from 'vue'
-import { downloadIssuesXlsx } from '@/utils/exportIssues'
 import { findTransitionByIntent, formatDisplayName, reopenedStatuses, resolvedStatuses } from '@/utils/issue'
 
 export type DashboardTab = 'all' | 'reopened' | 'todo'
@@ -154,7 +153,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
   const isExporting = shallowRef(false)
   const exportProgress = shallowRef(0)
 
-  async function exportAllIssues() {
+  async function exportAllIssues(format: 'xlsx' | 'json' = 'xlsx') {
     if (isExporting.value)
       return
 
@@ -162,19 +161,76 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     exportProgress.value = 0
     transitionError.value = null
 
+    // 固定本次导出的筛选条件，避免等待请求时切换项目导致文件名与数据不一致。
+    const projectKey = projectFilter.value
+    const assignees = [...assigneeFilter.value]
+
     try {
-      const response = await jira.getAllAssignedIssues(projectFilter.value, assigneeFilter.value)
+      const response = await jira.getAllAssignedIssues(projectKey, assignees)
       exportProgress.value = 5
-      await downloadIssuesXlsx(response.issues, {
-        projectKey: projectFilter.value,
+
+      const { downloadIssuesXlsx, downloadIssuesJson } = await import('@/utils/exportIssues')
+
+      const exportOptions = {
+        projectKey,
         formatAssignee: formatDisplayName,
-        loadImage: url => jira.getAttachmentBlob(url),
-        onImageProgress(completed, total) {
+        loadImage: (url: string) => jira.getAttachmentBlob(url),
+        onImageProgress(completed: number, total: number) {
           exportProgress.value = total === 0
             ? 90
             : 5 + Math.round((completed / total) * 85)
         },
-      })
+      }
+
+      if (format === 'xlsx') {
+        await downloadIssuesXlsx(response.issues, exportOptions)
+      }
+      else {
+        downloadIssuesJson(response.issues, exportOptions)
+      }
+      exportProgress.value = 100
+    }
+    catch (error) {
+      transitionError.value = options.t('common.error_export') || `Export failed: ${String(error)}`
+    }
+    finally {
+      isExporting.value = false
+      exportProgress.value = 0
+    }
+  }
+
+  async function exportSingleIssue(issueKey: string, format: 'xlsx' | 'json' = 'xlsx') {
+    if (isExporting.value)
+      return
+
+    const issueToExport = allIssues.value.find(i => i.key === issueKey) || selectedIssue.value
+    if (!issueToExport) return
+
+    isExporting.value = true
+    exportProgress.value = 0
+    transitionError.value = null
+
+    try {
+      exportProgress.value = 5
+      const { downloadIssuesXlsx, downloadIssuesJson } = await import('@/utils/exportIssues')
+
+      const exportOptions = {
+        projectKey: issueToExport.key,
+        formatAssignee: formatDisplayName,
+        loadImage: (url: string) => jira.getAttachmentBlob(url),
+        onImageProgress(completed: number, total: number) {
+          exportProgress.value = total === 0
+            ? 90
+            : 5 + Math.round((completed / total) * 85)
+        },
+      }
+
+      if (format === 'xlsx') {
+        await downloadIssuesXlsx([issueToExport], exportOptions)
+      }
+      else {
+        downloadIssuesJson([issueToExport], exportOptions)
+      }
       exportProgress.value = 100
     }
     catch (error) {
@@ -317,6 +373,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     isExporting,
     exportProgress,
     exportAllIssues,
+    exportSingleIssue,
     handleTransition,
     handleAssign,
     toggleTodo,

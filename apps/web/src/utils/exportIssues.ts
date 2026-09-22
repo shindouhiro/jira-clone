@@ -347,3 +347,43 @@ export async function downloadIssuesXlsx(
   downloadLink.remove()
   window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0)
 }
+
+export function downloadIssuesJson(
+  issues: JiraIssue[],
+  options: CreateIssuesWorkbookOptions = {},
+) {
+  const simplifyIssue = (issue: JiraIssue) => ({
+    key: issue.key,
+    project: issue.fields.project?.name,
+    type: issue.fields.issuetype?.name,
+    summary: issue.fields.summary,
+    status: issue.fields.status?.name,
+    resolution: issue.fields.resolution?.name || null,
+    priority: issue.fields.priority?.name,
+    assignee: issue.fields.assignee?.displayName ? (options.formatAssignee?.(issue.fields.assignee.displayName) || issue.fields.assignee.displayName) : null,
+    created: issue.fields.created,
+    updated: issue.fields.updated,
+    description: issue.fields.description,
+    attachments: (issue.fields.attachment || []).map(a => ({
+      filename: a.filename,
+      mimeType: a.mimeType,
+      size: Math.round(a.size / 1024) + ' KiB',
+      link: a.content
+    }))
+  })
+
+  const jsonContent = JSON.stringify(issues.map(simplifyIssue), null, 2)
+  const blob = new Blob([jsonContent], { type: 'application/json' })
+  const downloadUrl = URL.createObjectURL(blob)
+  const downloadLink = document.createElement('a')
+  const date = new Date().toISOString().slice(0, 10)
+  const projectKey = (options.projectKey || 'my-issues').replace(/[^a-z0-9_-]/gi, '-')
+
+  downloadLink.id = 'jira-issues-export-json-download'
+  downloadLink.href = downloadUrl
+  downloadLink.download = `jira-${projectKey}-all-issues-${date}.json`
+  document.body.append(downloadLink)
+  downloadLink.click()
+  downloadLink.remove()
+  window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0)
+}

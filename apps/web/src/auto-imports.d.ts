@@ -36,6 +36,7 @@ declare global {
   const defineAsyncComponent: typeof import('vue')['defineAsyncComponent']
   const defineComponent: typeof import('vue')['defineComponent']
   const defineStore: typeof import('pinia')['defineStore']
+  const downloadIssuesJson: typeof import('./utils/exportIssues')['downloadIssuesJson']
   const downloadIssuesXlsx: typeof import('./utils/exportIssues')['downloadIssuesXlsx']
   const eagerComputed: typeof import('@vueuse/core')['eagerComputed']
   const effectScope: typeof import('vue')['effectScope']
@@ -370,6 +371,7 @@ declare module 'vue' {
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly defineStore: UnwrapRef<typeof import('pinia')['defineStore']>
+    readonly downloadIssuesJson: UnwrapRef<typeof import('./utils/exportIssues')['downloadIssuesJson']>
     readonly downloadIssuesXlsx: UnwrapRef<typeof import('./utils/exportIssues')['downloadIssuesXlsx']>
     readonly eagerComputed: UnwrapRef<typeof import('@vueuse/core')['eagerComputed']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>

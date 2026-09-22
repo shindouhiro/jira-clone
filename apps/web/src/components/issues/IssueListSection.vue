@@ -17,6 +17,7 @@ const emit = defineEmits<{
   (event: 'openDetail', issueKey: string): void
   (event: 'transition', issueKey: string, transitionIds: string): void
   (event: 'toggleTodo', issueKey: string): void
+  (event: 'export', issueKey: string, format: 'xlsx' | 'json'): void
 }>()
 
 const { t } = useI18n()
@@ -53,6 +54,7 @@ function forwardTransition(issueKey: string, transitionIds: string) {
         @open-detail="emit('openDetail', $event)"
         @transition="forwardTransition"
         @toggle-todo="emit('toggleTodo', $event)"
+        @export="(key, format) => emit('export', key, format)"
       />
     </TransitionGroup>
 

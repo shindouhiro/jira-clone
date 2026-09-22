@@ -3,6 +3,7 @@
     "refresh": "刷新",
     "refreshing": "刷新中...",
     "export_all_issues": "导出全部",
+    "export_json": "导出 JSON",
     "exporting_issues": "导出中...",
     "all_projects": "所有我的项目",
     "loading_projects": "加载项目中...",
