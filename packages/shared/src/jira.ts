@@ -195,7 +195,19 @@ export class JiraClient {
       isFetching.value = true
 
       try {
-        const response = await this.fetchAllIssues(jql, controller.signal)
+        const response = await this.fetchAllIssues(jql, controller.signal, [
+          'summary',
+          'status',
+          'priority',
+          'assignee',
+          'project',
+          'issuetype',
+          'resolution',
+          'description',
+          'created',
+          'updated',
+          'attachment',
+        ])
 
         if (currentSequence === requestSequence)
           data.value = response

@@ -163,10 +163,9 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
 
     // 固定本次导出的筛选条件，避免等待请求时切换项目导致文件名与数据不一致。
     const projectKey = projectFilter.value
-    const assignees = [...assigneeFilter.value]
+    const issuesToExport = [...issues.value]
 
     try {
-      const response = await jira.getAllAssignedIssues(projectKey, assignees)
       exportProgress.value = 5
 
       const { downloadIssuesXlsx, downloadIssuesJson } = await import('@/utils/exportIssues')
@@ -183,10 +182,10 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
       }
 
       if (format === 'xlsx') {
-        await downloadIssuesXlsx(response.issues, exportOptions)
+        await downloadIssuesXlsx(issuesToExport, exportOptions)
       }
       else {
-        downloadIssuesJson(response.issues, exportOptions)
+        downloadIssuesJson(issuesToExport, exportOptions)
       }
       exportProgress.value = 100
     }
