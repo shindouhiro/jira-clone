@@ -91,6 +91,31 @@ export class JiraClient {
     return `${jql} ORDER BY created DESC`
   }
 
+  /**
+   * 构建查询 Reopened 状态 issue 的 JQL
+   * 独立于主列表查询，确保 Reopened 标签页能正确显示
+   */
+  private buildReopenedIssuesJql(project?: string, assignees: string[] = ['currentUser()'], priority: string[] = []) {
+    const escapedProject = project?.replace(/([\\\"])/g, '\\$1')
+    let jql = escapedProject
+      ? `project = "${escapedProject}"`
+      : 'issuetype = Bug'
+
+    jql += ' AND status IN (Reopened, "重新打开")'
+
+    if (assignees.length > 0 && !assignees.includes('all')) {
+      const formattedAssignees = assignees.map(a => a === 'currentUser()' ? 'currentUser()' : `"${a.replace(/([\\\"])/g, '\\$1')}"`)
+      jql += ` AND assignee IN (${formattedAssignees.join(', ')})`
+    }
+
+    if (priority.length > 0 && !priority.includes('all')) {
+      const formattedPriorities = priority.map(p => `"${p.replace(/([\\\"])/g, '\\$1')}"`)
+      jql += ` AND priority IN (${formattedPriorities.join(', ')})`
+    }
+
+    return `${jql} ORDER BY created DESC`
+  }
+
   private async fetchAllIssues(jql: string, signal?: AbortSignal, fields?: string[]): Promise<JiraSearchResponse> {
     const issues: JiraIssue[] = []
     const pageSize = 100
@@ -225,7 +250,74 @@ export class JiraClient {
     }
 
     watch(
-      [project, unresolvedOnly],
+      [project, unresolvedOnly, assignees, priorities],
+      (_values, _oldValues, onCleanup) => {
+        void execute()
+        onCleanup(() => {
+          requestSequence++
+          activeController?.abort()
+          activeController = undefined
+        })
+      },
+      { immediate: true },
+    )
+
+    return { data, error, isFetching, execute }
+  }
+
+  /**
+   * 独立查询 Reopened 状态的 issue
+   * 使用服务端 status 条件精确过滤，不依赖前端 status 名称匹配
+   */
+  getReopenedBugs(project: () => string | undefined, assignees: () => string[] = () => ['currentUser()'], priorities: () => string[] = () => []) {
+    const data = shallowRef<JiraSearchResponse>()
+    const error = shallowRef<unknown>(null)
+    const isFetching = shallowRef(false)
+    let activeController: AbortController | undefined
+    let requestSequence = 0
+
+    const execute = async () => {
+      activeController?.abort()
+      const controller = new AbortController()
+      activeController = controller
+      const currentSequence = ++requestSequence
+      const jql = this.buildReopenedIssuesJql(project(), assignees(), priorities())
+
+      error.value = null
+      isFetching.value = true
+
+      try {
+        const response = await this.fetchAllIssues(jql, controller.signal, [
+          'summary',
+          'status',
+          'priority',
+          'assignee',
+          'project',
+          'issuetype',
+          'resolution',
+          'description',
+          'created',
+          'updated',
+          'attachment',
+        ])
+
+        if (currentSequence === requestSequence)
+          data.value = response
+      }
+      catch (fetchError) {
+        if (currentSequence === requestSequence)
+          error.value = fetchError
+      }
+      finally {
+        if (currentSequence === requestSequence) {
+          isFetching.value = false
+          activeController = undefined
+        }
+      }
+    }
+
+    watch(
+      [project, assignees, priorities],
       (_values, _oldValues, onCleanup) => {
         void execute()
         onCleanup(() => {

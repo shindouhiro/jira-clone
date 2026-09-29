@@ -44,6 +44,7 @@ const {
   issues,
   isFetching,
   fetchBugs,
+  fetchReopenedBugs,
   selectedIssue,
   isDetailFetching,
   transitions,
@@ -116,6 +117,7 @@ function resolveAttachmentUrl(url: string) {
 
 function refreshIssues() {
   void fetchBugs()
+  void fetchReopenedBugs()
 }
 </script>
 

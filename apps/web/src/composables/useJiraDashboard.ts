@@ -1,7 +1,7 @@
 import { JiraClient } from '@jira/shared'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, ref, shallowRef } from 'vue'
-import { findTransitionByIntent, formatDisplayName, reopenedStatuses, resolvedStatuses } from '@/utils/issue'
+import { findTransitionByIntent, formatDisplayName, resolvedStatuses } from '@/utils/issue'
 
 export type DashboardTab = 'all' | 'reopened' | 'todo'
 
@@ -72,6 +72,17 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     () => priorityFilter.value,
   )
 
+  // 独立查询 Reopened 状态的 issue（不受 unresolvedOnly 影响）
+  const {
+    data: reopenedData,
+    isFetching: isReopenedFetching,
+    execute: fetchReopenedBugs,
+  } = jira.getReopenedBugs(
+    () => projectFilter.value,
+    () => assigneeFilter.value,
+    () => priorityFilter.value,
+  )
+
   // 已成功流转的 issue key，立即从列表隐藏（不依赖 Jira API 刷新）
   const dismissedKeys = ref<Set<string>>(new Set())
 
@@ -106,7 +117,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
   })
 
   const reopenedIssues = computed(() => {
-    return allIssues.value.filter(issue => reopenedStatuses.has(issue.fields.status.name))
+    return reopenedData.value?.issues || []
   })
 
   const issues = computed(() => {
@@ -300,6 +311,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
 
         // 后台刷新数据
         void fetchBugs()
+        void fetchReopenedBugs()
       }
     }
     catch (error) {
@@ -357,9 +369,11 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     isPrioritiesLoading,
     allIssues,
     reopenedIssues,
+    isReopenedFetching,
     issues,
     isFetching,
     fetchBugs,
+    fetchReopenedBugs,
     selectedIssue,
     isDetailFetching,
     transitions,
