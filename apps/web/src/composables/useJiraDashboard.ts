@@ -163,6 +163,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
   const transitionError = ref<string | null>(null)
   const isExporting = shallowRef(false)
   const exportProgress = shallowRef(0)
+  const jsonCopied = shallowRef(false)
 
   async function exportAllIssues(format: 'xlsx' | 'json' = 'xlsx') {
     if (isExporting.value)
@@ -196,7 +197,9 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
         await downloadIssuesXlsx(issuesToExport, exportOptions)
       }
       else {
-        downloadIssuesJson(issuesToExport, exportOptions)
+        await downloadIssuesJson(issuesToExport, exportOptions)
+        jsonCopied.value = true
+        setTimeout(() => { jsonCopied.value = false }, 2000)
       }
       exportProgress.value = 100
     }
@@ -239,7 +242,9 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
         await downloadIssuesXlsx([issueToExport], exportOptions)
       }
       else {
-        downloadIssuesJson([issueToExport], exportOptions)
+        await downloadIssuesJson([issueToExport], exportOptions)
+        jsonCopied.value = true
+        setTimeout(() => { jsonCopied.value = false }, 2000)
       }
       exportProgress.value = 100
     }
@@ -387,6 +392,7 @@ export function useJiraDashboard(options: UseJiraDashboardOptions) {
     exportProgress,
     exportAllIssues,
     exportSingleIssue,
+    jsonCopied,
     handleTransition,
     handleAssign,
     toggleTodo,

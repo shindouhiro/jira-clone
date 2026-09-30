@@ -134,11 +134,11 @@ function runTransition(transitionIds: string) {
               :id="`issue-export-json-${issue.key}`"
               class="flex-1 flex items-center justify-center gap-1.5 border border-gray-200 rounded-lg bg-gray-50/80 px-2 py-1.5 text-xs text-gray-600 font-bold shadow-sm backdrop-blur-sm transition active:scale-95 dark:border-gray-500/30 dark:bg-gray-500/5 dark:text-gray-300 dark:shadow-none hover:bg-gray-100 dark:hover:bg-gray-500/10 hover:text-teal-600"
               type="button"
-              title="Export JSON"
+              title="Copy JSON"
               :disabled="isUpdating"
               @click.stop="emit('export', issue.key, 'json')"
             >
-              <div class="i-tabler-file-code" />
+              <div class="i-tabler-clipboard-copy" />
               JSON
             </button>
           </div>

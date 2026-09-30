@@ -61,6 +61,7 @@ const {
   todoKeys,
   exportAllIssues,
   exportSingleIssue,
+  jsonCopied,
   handleTransition: originalHandleTransition,
   handleAssign: originalHandleAssign,
 } = dashboard
@@ -142,6 +143,7 @@ function refreshIssues() {
         :is-initial-loading="isInitialLoading"
         :is-exporting="isExporting"
         :export-progress="exportProgress"
+        :json-copied="jsonCopied"
         :is-refreshing="isFetching"
         :all-count="allIssues.length"
         :reopened-count="reopenedIssues.length"

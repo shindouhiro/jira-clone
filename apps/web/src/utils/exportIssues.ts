@@ -348,7 +348,7 @@ export async function downloadIssuesXlsx(
   window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0)
 }
 
-export function downloadIssuesJson(
+export async function downloadIssuesJson(
   issues: JiraIssue[],
   options: CreateIssuesWorkbookOptions = {},
 ) {
@@ -373,17 +373,5 @@ export function downloadIssuesJson(
   })
 
   const jsonContent = JSON.stringify(issues.map(simplifyIssue), null, 2)
-  const blob = new Blob([jsonContent], { type: 'application/json' })
-  const downloadUrl = URL.createObjectURL(blob)
-  const downloadLink = document.createElement('a')
-  const date = new Date().toISOString().slice(0, 10)
-  const projectKey = (options.projectKey || 'my-issues').replace(/[^a-z0-9_-]/gi, '-')
-
-  downloadLink.id = 'jira-issues-export-json-download'
-  downloadLink.href = downloadUrl
-  downloadLink.download = `jira-${projectKey}-all-issues-${date}.json`
-  document.body.append(downloadLink)
-  downloadLink.click()
-  downloadLink.remove()
-  window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0)
+  await navigator.clipboard.writeText(jsonContent)
 }

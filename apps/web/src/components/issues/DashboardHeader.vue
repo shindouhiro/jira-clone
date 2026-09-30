@@ -105,6 +105,7 @@ interface Props {
   isInitialLoading: boolean
   isExporting: boolean
   exportProgress: number
+  jsonCopied?: boolean
   isRefreshing: boolean
   allCount: number
   reopenedCount: number
@@ -466,13 +467,16 @@ const { t } = useI18n()
 
       <button
         id="dashboard-export-issues-json-button"
-        class="h-8 flex items-center gap-2 border border-gray-200 rounded-lg bg-gray-50 px-3 text-sm text-gray-600 font-bold shadow-sm transition hover:border-teal-500/40 hover:bg-teal-50 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-teal-400/40 dark:hover:bg-teal-500/10 dark:hover:text-teal-300"
+        class="h-8 flex items-center gap-2 border rounded-lg px-3 text-sm font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+        :class="jsonCopied
+          ? 'border-green-500/40 bg-green-50 text-green-600 dark:border-green-400/40 dark:bg-green-500/10 dark:text-green-400'
+          : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-teal-500/40 hover:bg-teal-50 hover:text-teal-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-teal-400/40 dark:hover:bg-teal-500/10 dark:hover:text-teal-300'"
         :disabled="isExporting || isInitialLoading"
         type="button"
         @click="emit('exportIssues', 'json')"
       >
-        <div class="i-tabler-file-code" />
-        {{ t('common.export_json') || 'JSON' }}
+        <div :class="jsonCopied ? 'i-tabler-check' : 'i-tabler-clipboard-copy'" />
+        {{ jsonCopied ? (t('common.copied') || 'Copied!') : (t('common.copy_json') || 'Copy JSON') }}
       </button>
 
       <button
